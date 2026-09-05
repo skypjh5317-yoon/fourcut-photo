@@ -6,19 +6,19 @@ export type BackgroundOption = {
 }
 
 /**
- * Canon SELPHY CP1500 10x15cm 인쇄를 고려한 가로형 캔버스
- * 1800 x 1200, 3:2 비율
+ * Canon SELPHY CP1500 10x15cm 세로 인쇄를 고려한 캔버스
+ * 1000 x 1480, 100:148 비율
  */
-export const CANVAS_WIDTH = 1800
-export const CANVAS_HEIGHT = 1200
+export const CANVAS_WIDTH = 1000
+export const CANVAS_HEIGHT = 1480
 
 // 전체 디자인 여백
-const SIDE_MARGIN = 100
+const SIDE_MARGIN = 40
 
 // 사진 영역
-const PHOTO_GAP = 24
-const TOP_AREA = 140
-const BOTTOM_AREA = 80
+const PHOTO_GAP = 18
+const TOP_AREA = 180
+const BOTTOM_AREA = 180
 const PHOTO_WIDTH = Math.floor((CANVAS_WIDTH - SIDE_MARGIN * 2 - PHOTO_GAP) / 2)
 const PHOTO_HEIGHT = Math.floor(
   (CANVAS_HEIGHT - TOP_AREA - BOTTOM_AREA - PHOTO_GAP) / 2,
@@ -171,7 +171,7 @@ function drawPhotoFrame(
 }
 
 /**
- * 2x2 포토부스 이미지 생성
+ * 세로 10x15cm 2x2 포토부스 이미지 생성
  *
  * images:
  * - 촬영된 사진 배열

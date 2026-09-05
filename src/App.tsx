@@ -6,6 +6,7 @@ import { createFourCutImage } from './utils/photoUtils'
 type Screen = 'welcome' | 'camera' | 'selection' | 'background' | 'result'
 type CameraStatus = 'idle' | 'loading' | 'ready' | 'error'
 type CapturePhase = 'idle' | 'countdown' | 'flash' | 'preparing'
+type CameraFacing = 'user' | 'environment'
 
 const PHOTO_COUNT = 6
 
@@ -55,6 +56,8 @@ function App() {
   const [countdown, setCountdown] = useState<number | null>(null)
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<number[]>([])
   const [isComposing, setIsComposing] = useState(false)
+  const [framePreview, setFramePreview] = useState('')
+  const [cameraFacing, setCameraFacing] = useState<CameraFacing>('user')
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const capturedImagesRef = useRef<string[]>([])
@@ -85,13 +88,17 @@ function App() {
     capturedImagesRef.current = []
     setCapturedImages([])
     setFinalImage('')
+    setFramePreview('')
     setSelectedPhotoIds([])
     setCapturePhase('idle')
     setCountdown(null)
   }
 
-  const startCamera = async () => {
-    resetCaptureState()
+  const startCamera = async (
+    facing: CameraFacing = cameraFacing,
+    resetState = true,
+  ) => {
+    if (resetState) resetCaptureState()
     stopCamera()
     const requestId = requestIdRef.current
     setScreen('camera')
@@ -101,10 +108,10 @@ function App() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: { ideal: 'environment' },
-          aspectRatio: { ideal: 16 / 9 },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          facingMode: { ideal: facing },
+          aspectRatio: { ideal: 3 / 4 },
+          width: { ideal: 1080 },
+          height: { ideal: 1440 },
         },
         audio: false,
       })
@@ -133,8 +140,8 @@ function App() {
       return null
     }
 
-    const captureWidth = 1280
-    const captureHeight = 720
+    const captureWidth = 1080
+    const captureHeight = 1440
     const targetAspectRatio = captureWidth / captureHeight
     const sourceAspectRatio = video.videoWidth / video.videoHeight
     let sourceWidth = video.videoWidth
@@ -274,12 +281,49 @@ function App() {
       const selectedImages = selectedPhotoIds.map((index) => capturedImages[index])
       const image = await createFourCutImage(selectedImages, selectedBackground)
       setFinalImage(image)
+      setFramePreview(image)
       setScreen('result')
     } catch {
       setCameraError('사진을 완성하는 중 문제가 생겼어요. 다시 선택해주세요.')
     } finally {
       setIsComposing(false)
     }
+  }
+
+  const handleOpenBackground = async () => {
+    if (selectedPhotoIds.length !== 4) return
+    try {
+      setIsComposing(true)
+      const selectedImages = selectedPhotoIds.map((index) => capturedImages[index])
+      const image = await createFourCutImage(selectedImages, selectedBackground)
+      setFramePreview(image)
+      setScreen('background')
+    } catch {
+      setCameraError('미리보기를 만드는 중 문제가 생겼어요.')
+    } finally {
+      setIsComposing(false)
+    }
+  }
+
+  const handleBackgroundSelect = async (background: BackgroundOption) => {
+    setSelectedBackground(background)
+    try {
+      setIsComposing(true)
+      const selectedImages = selectedPhotoIds.map((index) => capturedImages[index])
+      const image = await createFourCutImage(selectedImages, background)
+      setFramePreview(image)
+    } catch {
+      setCameraError('프레임 미리보기를 만드는 중 문제가 생겼어요.')
+    } finally {
+      setIsComposing(false)
+    }
+  }
+
+  const handleCameraToggle = () => {
+    if (cameraStatus === 'loading' || capturePhase !== 'idle') return
+    const nextFacing: CameraFacing = cameraFacing === 'user' ? 'environment' : 'user'
+    setCameraFacing(nextFacing)
+    void startCamera(nextFacing, false)
   }
 
   const handlePrint = () => {
@@ -403,7 +447,7 @@ function App() {
             type="button"
             className="background-start-button"
             disabled={selectedPhotoIds.length !== 4}
-            onClick={() => setScreen('background')}
+            onClick={() => void handleOpenBackground()}
           >
             다음: 배경 프레임 선택
           </button>
@@ -436,13 +480,17 @@ function App() {
 
         <section className="background-content">
           <div className="frame-preview" aria-label="선택한 사진과 프레임 미리보기">
-            {selectedPhotoIds.map((photoIndex, order) => (
-              <img
-                key={`${capturedImages[photoIndex]}-${order}`}
-                src={capturedImages[photoIndex]}
-                alt={`4컷 미리보기 ${order + 1}`}
-              />
-            ))}
+            {framePreview ? (
+              <img src={framePreview} alt="선택한 사진과 프레임 최종 인쇄 미리보기" />
+            ) : (
+              selectedPhotoIds.map((photoIndex, order) => (
+                <img
+                  key={`${capturedImages[photoIndex]}-${order}`}
+                  src={capturedImages[photoIndex]}
+                  alt={`4컷 미리보기 ${order + 1}`}
+                />
+              ))
+            )}
           </div>
           <div className="background-grid" aria-label="사진 프레임 목록">
             {BACKGROUND_OPTIONS.map((background) => (
@@ -452,7 +500,7 @@ function App() {
                   selectedBackground.id === background.id ? 'selected' : ''
                 }`}
                 key={background.id}
-                onClick={() => setSelectedBackground(background)}
+                onClick={() => void handleBackgroundSelect(background)}
               >
                 <span className="background-preview" style={{ backgroundColor: background.color }}>
                   <span className="background-placeholder" aria-hidden="true">✦</span>
@@ -488,7 +536,14 @@ function App() {
             ← 뒤로
           </button>
           <h1>📸 사진 촬영</h1>
-          <div className="header-spacer" aria-hidden="true" />
+          <button
+            type="button"
+            className="camera-switch-button"
+            onClick={handleCameraToggle}
+            disabled={cameraStatus === 'loading' || capturePhase !== 'idle'}
+          >
+            ↻ {cameraFacing === 'user' ? '후면' : '전면'} 카메라
+          </button>
         </header>
 
         <section className="camera-content" aria-live="polite">
@@ -506,7 +561,9 @@ function App() {
               autoPlay
               playsInline
               muted
-              className={cameraStatus === 'ready' ? 'video-preview' : 'video-preview hidden'}
+              className={`video-preview ${cameraFacing === 'user' ? 'mirrored' : ''} ${
+                cameraStatus === 'ready' ? '' : 'hidden'
+              }`}
             />
             {capturePhase === 'countdown' && countdown !== null && (
               <div className="countdown-overlay" aria-live="assertive">
