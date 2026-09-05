@@ -140,9 +140,8 @@ function App() {
       return null
     }
 
-    const captureWidth = 1080
-    const captureHeight = 1440
-    const targetAspectRatio = captureWidth / captureHeight
+    const captureSize = 1200
+    const targetAspectRatio = 1
     const sourceAspectRatio = video.videoWidth / video.videoHeight
     let sourceWidth = video.videoWidth
     let sourceHeight = video.videoHeight
@@ -158,8 +157,8 @@ function App() {
     }
 
     const canvas = document.createElement('canvas')
-    canvas.width = captureWidth
-    canvas.height = captureHeight
+    canvas.width = captureSize
+    canvas.height = captureSize
     const context = canvas.getContext('2d')
 
     if (!context) {
@@ -174,8 +173,8 @@ function App() {
       sourceHeight,
       0,
       0,
-      canvas.width,
-      canvas.height,
+      captureSize,
+      captureSize,
     )
     return canvas.toDataURL('image/jpeg', 0.92)
   }
@@ -570,6 +569,7 @@ function App() {
                 cameraStatus === 'ready' ? '' : 'hidden'
               }`}
             />
+            <div className="square-capture-guide" aria-hidden="true" />
             {capturePhase === 'countdown' && countdown !== null && (
               <div className="countdown-overlay" aria-live="assertive">
                 {countdown}

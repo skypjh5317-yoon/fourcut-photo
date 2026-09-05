@@ -334,7 +334,7 @@
 }
 
 .selection-card img {
-  aspect-ratio: 371 / 551;
+  aspect-ratio: 1 / 1;
   background: #dfe7e8;
   display: block;
   height: auto;
@@ -401,7 +401,7 @@
 .four-preview img,
 .four-preview-empty {
   align-items: center;
-  aspect-ratio: 371 / 551;
+  aspect-ratio: 1 / 1;
   background: #e7edf0;
   color: #7b8491;
   display: flex;
@@ -452,6 +452,22 @@
 
 .video-preview.mirrored {
   transform: scaleX(-1);
+}
+
+.square-capture-guide {
+  aspect-ratio: 1 / 1;
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  border-radius: 18px;
+  box-shadow: 0 0 0 9999px rgba(24, 37, 54, 0.28);
+  left: 50%;
+  max-height: 88%;
+  max-width: 88%;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(88%, 82svh);
+  z-index: 1;
 }
 
 .video-preview.hidden {
