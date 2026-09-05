@@ -9,10 +9,10 @@ export const CANVAS_WIDTH = 1200
 export const CANVAS_HEIGHT = 1776
 const SAFE_MARGIN = 60
 const PHOTO_WIDTH = 900
-const PHOTO_HEIGHT = 320
+const PHOTO_HEIGHT = 420
 const PHOTO_X = SAFE_MARGIN + (CANVAS_WIDTH - SAFE_MARGIN * 2 - PHOTO_WIDTH) / 2
-const PHOTO_START_Y = 300
-const PHOTO_GAP = 16
+const PHOTO_START_Y = 290
+const PHOTO_GAP = 20
 
 function loadImage(source: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -50,6 +50,23 @@ function drawCoverImage(
   )
 }
 
+function drawContainImage(
+  context: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight)
+  const drawnWidth = image.naturalWidth * scale
+  const drawnHeight = image.naturalHeight * scale
+  const drawnX = x + (width - drawnWidth) / 2
+  const drawnY = y + (height - drawnHeight) / 2
+
+  context.drawImage(image, drawnX, drawnY, drawnWidth, drawnHeight)
+}
+
 export async function createFourCutImage(
   images: string[],
   background: BackgroundOption,
@@ -82,14 +99,14 @@ export async function createFourCutImage(
   context.font = '700 30px "Trebuchet MS", "Malgun Gothic", sans-serif'
   context.fillText(background.name, CANVAS_WIDTH / 2, 235)
 
-  const loadedPhotos = await Promise.all(images.map((image) => loadImage(image)))
+  const loadedPhotos = await Promise.all(images.slice(0, 3).map((image) => loadImage(image)))
   loadedPhotos.forEach((image, index) => {
     if (!image) return
 
     const y = PHOTO_START_Y + index * (PHOTO_HEIGHT + PHOTO_GAP)
     context.fillStyle = '#ffffff'
     context.fillRect(PHOTO_X - 14, y - 14, PHOTO_WIDTH + 28, PHOTO_HEIGHT + 28)
-    drawCoverImage(context, image, PHOTO_X, y, PHOTO_WIDTH, PHOTO_HEIGHT)
+    drawContainImage(context, image, PHOTO_X, y, PHOTO_WIDTH, PHOTO_HEIGHT)
   })
 
   context.fillStyle = '#2e4057'
