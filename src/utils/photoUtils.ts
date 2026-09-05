@@ -5,44 +5,30 @@ export type BackgroundOption = {
   color: string
 }
 
-// 최종 인화 이미지: 4×6 세로 비율
+/**
+ * Canon SELPHY CP1500 4×6 인쇄를 고려한 세로형 캔버스
+ * 1200 × 1776
+ */
 export const CANVAS_WIDTH = 1200
 export const CANVAS_HEIGHT = 1776
 
-// ─────────────────────────────────────
-// 3컷 레이아웃
-// ─────────────────────────────────────
+// 전체 디자인 여백
+const SIDE_MARGIN = 70
 
-// 좌우 여백
-const SIDE_MARGIN = 100
-
-// 사진 실제 표시 영역
-const PHOTO_WIDTH = CANVAS_WIDTH - SIDE_MARGIN * 2
+// 사진 영역
+// 세로 사진을 최대한 크게 보여주되,
+// 3장의 사진이 모두 들어갈 수 있도록 구성
+const PHOTO_WIDTH = 680
+const PHOTO_HEIGHT = 455
 
 // 사진 사이 간격
-const PHOTO_GAP = 18
+const PHOTO_GAP = 22
 
-// 제목 영역
-const TOP_AREA = 245
-
-// 하단 문구 영역
-const BOTTOM_AREA = 90
-
-// 3장의 사진에 사용할 전체 높이
-const AVAILABLE_PHOTO_HEIGHT =
-  CANVAS_HEIGHT -
-  TOP_AREA -
-  BOTTOM_AREA -
-  PHOTO_GAP * 2
-
-// 사진 한 장당 슬롯 높이
-const PHOTO_HEIGHT = Math.floor(AVAILABLE_PHOTO_HEIGHT / 3)
+// 사진 시작 위치
+const PHOTO_START_Y = 255
 
 // 사진 X 위치
 const PHOTO_X = (CANVAS_WIDTH - PHOTO_WIDTH) / 2
-
-// 첫 번째 사진 Y 위치
-const PHOTO_START_Y = TOP_AREA
 
 function loadImage(source: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -55,9 +41,10 @@ function loadImage(source: string): Promise<HTMLImageElement | null> {
   })
 }
 
-// 배경용
-// 캔버스 전체를 채우기 위해 사용
-// 학생 사진에는 사용하지 않음
+/**
+ * 배경 이미지는 캔버스 전체를 채움
+ * 배경은 잘려도 괜찮으므로 cover 사용
+ */
 function drawCoverImage(
   context: CanvasRenderingContext2D,
   image: HTMLImageElement,
@@ -66,6 +53,8 @@ function drawCoverImage(
   width: number,
   height: number,
 ) {
+  if (!image.naturalWidth || !image.naturalHeight) return
+
   const scale = Math.max(
     width / image.naturalWidth,
     height / image.naturalHeight,
@@ -90,9 +79,12 @@ function drawCoverImage(
   )
 }
 
-// 학생 사진용
-// 원본 비율을 유지하면서 사진을 최대한 크게 표시
-// 절대로 사진을 자르지 않음
+/**
+ * 학생 사진은 원본 비율을 유지하면서 영역 안에 넣음
+ *
+ * 단순 contain을 사용하면 양옆에 지나치게 큰 흰 여백이
+ * 생길 수 있으므로 사진 영역 자체를 세로형으로 설계했다.
+ */
 function drawContainImage(
   context: CanvasRenderingContext2D,
   image: HTMLImageElement,
@@ -101,6 +93,8 @@ function drawContainImage(
   width: number,
   height: number,
 ) {
+  if (!image.naturalWidth || !image.naturalHeight) return
+
   const scale = Math.min(
     width / image.naturalWidth,
     height / image.naturalHeight,
@@ -121,6 +115,71 @@ function drawContainImage(
   )
 }
 
+/**
+ * 사진 주변의 배경 영역을 자연스럽게 채움
+ *
+ * 사진이 세로형이라 사진 좌우에 남는 공간을
+ * 흰색으로 남겨두지 않고 선택한 배경색으로 채운다.
+ */
+function drawPhotoBackground(
+  context: CanvasRenderingContext2D,
+  background: BackgroundOption,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  context.save()
+
+  // 둥근 모서리
+  const radius = 18
+
+  context.beginPath()
+  context.roundRect(x, y, width, height, radius)
+  context.clip()
+
+  context.fillStyle = background.color
+  context.fillRect(x, y, width, height)
+
+  context.restore()
+}
+
+/**
+ * 사진 프레임
+ */
+function drawPhotoFrame(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+) {
+  context.save()
+
+  const radius = 18
+
+  context.beginPath()
+  context.roundRect(
+    x - 8,
+    y - 8,
+    width + 16,
+    height + 16,
+    radius + 3,
+  )
+
+  context.fillStyle = '#ffffff'
+  context.fill()
+
+  context.restore()
+}
+
+/**
+ * 3컷 포토부스 이미지 생성
+ *
+ * images:
+ * - 촬영된 사진 배열
+ * - 앞에서부터 최대 3장 사용
+ */
 export async function createFourCutImage(
   images: string[],
   background: BackgroundOption,
@@ -136,9 +195,9 @@ export async function createFourCutImage(
     throw new Error('Canvas를 사용할 수 없습니다.')
   }
 
-  // ─────────────────────────────────────
+  // --------------------------------------------------
   // 1. 배경
-  // ─────────────────────────────────────
+  // --------------------------------------------------
 
   const backgroundImage = await loadImage(background.image)
 
@@ -152,7 +211,8 @@ export async function createFourCutImage(
       CANVAS_HEIGHT,
     )
 
-    context.fillStyle = 'rgba(255, 255, 255, 0.22)'
+    // 배경을 조금 부드럽게
+    context.fillStyle = 'rgba(255, 255, 255, 0.18)'
     context.fillRect(
       0,
       0,
@@ -160,6 +220,7 @@ export async function createFourCutImage(
       CANVAS_HEIGHT,
     )
   } else {
+    // 배경 이미지가 없을 경우 선택한 색상 사용
     context.fillStyle = background.color
     context.fillRect(
       0,
@@ -168,53 +229,60 @@ export async function createFourCutImage(
       CANVAS_HEIGHT,
     )
 
-    context.fillStyle = 'rgba(255, 255, 255, 0.36)'
+    // 안쪽에 살짝 밝은 영역
+    context.fillStyle = 'rgba(255, 255, 255, 0.28)'
 
-    context.fillRect(
-      70,
-      70,
-      CANVAS_WIDTH - 140,
-      CANVAS_HEIGHT - 140,
+    context.roundRect(
+      SIDE_MARGIN,
+      SIDE_MARGIN,
+      CANVAS_WIDTH - SIDE_MARGIN * 2,
+      CANVAS_HEIGHT - SIDE_MARGIN * 2,
+      35,
     )
+
+    context.fill()
   }
 
-  // ─────────────────────────────────────
-  // 2. 제목
-  // ─────────────────────────────────────
+  // --------------------------------------------------
+  // 2. 상단 제목
+  // --------------------------------------------------
 
   context.fillStyle = '#2e4057'
 
-  context.font =
-    '800 58px "Trebuchet MS", "Malgun Gothic", sans-serif'
-
   context.textAlign = 'center'
-  context.textBaseline = 'alphabetic'
+  context.textBaseline = 'middle'
+
+  context.font =
+    '800 52px "Trebuchet MS", "Malgun Gothic", sans-serif'
 
   context.fillText(
     '우리의 3컷 사진',
     CANVAS_WIDTH / 2,
-    155,
+    110,
   )
 
   context.font =
-    '700 30px "Trebuchet MS", "Malgun Gothic", sans-serif'
+    '700 28px "Trebuchet MS", "Malgun Gothic", sans-serif'
 
   context.fillText(
     background.name,
     CANVAS_WIDTH / 2,
-    215,
+    165,
   )
 
-  // ─────────────────────────────────────
-  // 3. 사진 3장
-  // ─────────────────────────────────────
+  // --------------------------------------------------
+  // 3. 사진 불러오기
+  // --------------------------------------------------
 
-  // 촬영된 사진 중 최대 3장만 사용
   const loadedPhotos = await Promise.all(
     images
       .slice(0, 3)
       .map((image) => loadImage(image)),
   )
+
+  // --------------------------------------------------
+  // 4. 사진 3장 배치
+  // --------------------------------------------------
 
   loadedPhotos.forEach((image, index) => {
     if (!image) return
@@ -223,20 +291,32 @@ export async function createFourCutImage(
       PHOTO_START_Y +
       index * (PHOTO_HEIGHT + PHOTO_GAP)
 
-    // 사진 주변 흰색 테두리
-    const FRAME_PADDING = 10
-
-    context.fillStyle = '#ffffff'
-
-    context.fillRect(
-      PHOTO_X - FRAME_PADDING,
-      y - FRAME_PADDING,
-      PHOTO_WIDTH + FRAME_PADDING * 2,
-      PHOTO_HEIGHT + FRAME_PADDING * 2,
+    // 사진 영역의 배경
+    //
+    // 사진의 실제 비율 때문에 남는 좌우 공간을
+    // 흰색이 아니라 선택한 배경색으로 처리
+    drawPhotoBackground(
+      context,
+      background,
+      PHOTO_X,
+      y,
+      PHOTO_WIDTH,
+      PHOTO_HEIGHT,
     )
 
-    // 학생 사진
-    // contain 방식 → 얼굴과 상반신을 자르지 않음
+    // 흰색 포토 프레임
+    drawPhotoFrame(
+      context,
+      PHOTO_X,
+      y,
+      PHOTO_WIDTH,
+      PHOTO_HEIGHT,
+    )
+
+    // 실제 사진
+    //
+    // 사진은 원본 비율 유지
+    // 얼굴과 상체가 잘리지 않음
     drawContainImage(
       context,
       image,
@@ -247,24 +327,27 @@ export async function createFourCutImage(
     )
   })
 
-  // ─────────────────────────────────────
-  // 4. 하단 문구
-  // ─────────────────────────────────────
+  // --------------------------------------------------
+  // 5. 하단 문구
+  // --------------------------------------------------
 
   context.fillStyle = '#2e4057'
 
   context.font =
-    '700 30px "Trebuchet MS", "Malgun Gothic", sans-serif'
+    '700 28px "Trebuchet MS", "Malgun Gothic", sans-serif'
+
+  context.textAlign = 'center'
+  context.textBaseline = 'middle'
 
   context.fillText(
     '우리의 특별한 순간',
     CANVAS_WIDTH / 2,
-    CANVAS_HEIGHT - 45,
+    CANVAS_HEIGHT - 48,
   )
 
-  // ─────────────────────────────────────
-  // 5. JPEG 생성
-  // ─────────────────────────────────────
+  // --------------------------------------------------
+  // 6. JPEG 변환
+  // --------------------------------------------------
 
   return canvas.toDataURL(
     'image/jpeg',
