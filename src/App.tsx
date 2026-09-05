@@ -4,6 +4,8 @@ import {
   type BackgroundOption,
   createFourCutImage,
 } from './utils/photoUtils'
+import AdminBackgroundManager from './components/AdminBackgroundManager'
+import { fetchActiveBackgrounds } from './services/backgroundService'
 
 type Screen = 'welcome' | 'background' | 'camera' | 'result'
 type CameraStatus = 'idle' | 'loading' | 'ready' | 'error'
@@ -46,6 +48,7 @@ const BACKGROUND_OPTIONS: BackgroundOption[] = [
 
 function App() {
   const [screen, setScreen] = useState<Screen>('welcome')
+  const [backgroundOptions, setBackgroundOptions] = useState<BackgroundOption[]>(BACKGROUND_OPTIONS)
   const [selectedBackground, setSelectedBackground] = useState<BackgroundOption>(
     BACKGROUND_OPTIONS[0],
   )
@@ -64,6 +67,28 @@ function App() {
   const requestIdRef = useRef(0)
   const captureSequenceRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+
+  useEffect(() => {
+    let active = true
+    void fetchActiveBackgrounds()
+      .then((backgrounds) => {
+        if (!active || backgrounds.length === 0) return
+        setBackgroundOptions(backgrounds)
+        setBackgroundAvailability(
+          Object.fromEntries(backgrounds.map((background) => [background.id, true])),
+        )
+        setSelectedBackground((current) =>
+          backgrounds.find((background) => background.id === current.id) ?? backgrounds[0],
+        )
+      })
+      .catch(() => {
+        // Local fallback backgrounds keep the student flow available if Supabase is unavailable.
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const clearTimer = () => {
     if (timerRef.current !== null) {
@@ -260,6 +285,10 @@ function App() {
     }
   }, [])
 
+  if (window.location.pathname === '/admin') {
+    return <AdminBackgroundManager onBack={() => window.history.back()} />
+  }
+
   if (screen === 'result') {
     return (
       <main className="result-screen">
@@ -306,7 +335,7 @@ function App() {
 
         <section className="background-content">
           <div className="background-grid" aria-label="사진 배경 목록">
-            {BACKGROUND_OPTIONS.map((background) => (
+            {backgroundOptions.map((background) => (
               <button
                 type="button"
                 className={`background-card ${

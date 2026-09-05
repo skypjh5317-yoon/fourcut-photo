@@ -5,13 +5,14 @@ export type BackgroundOption = {
   color: string
 }
 
-const CANVAS_WIDTH = 1200
-const CANVAS_HEIGHT = 2400
-const PHOTO_WIDTH = 960
-const PHOTO_HEIGHT = 430
-const PHOTO_X = (CANVAS_WIDTH - PHOTO_WIDTH) / 2
-const PHOTO_START_Y = 340
-const PHOTO_GAP = 30
+export const CANVAS_WIDTH = 1200
+export const CANVAS_HEIGHT = 1776
+const SAFE_MARGIN = 60
+const PHOTO_WIDTH = CANVAS_WIDTH - SAFE_MARGIN * 2
+const PHOTO_HEIGHT = 290
+const PHOTO_X = SAFE_MARGIN
+const PHOTO_START_Y = 330
+const PHOTO_GAP = 24
 
 function loadImage(source: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -75,10 +76,10 @@ export async function createFourCutImage(
   }
 
   context.fillStyle = '#2e4057'
-  context.font = '800 68px "Trebuchet MS", "Malgun Gothic", sans-serif'
+  context.font = '800 58px "Trebuchet MS", "Malgun Gothic", sans-serif'
   context.textAlign = 'center'
   context.fillText('우리의 4컷 사진', CANVAS_WIDTH / 2, 175)
-  context.font = '700 34px "Trebuchet MS", "Malgun Gothic", sans-serif'
+  context.font = '700 30px "Trebuchet MS", "Malgun Gothic", sans-serif'
   context.fillText(background.name, CANVAS_WIDTH / 2, 235)
 
   const loadedPhotos = await Promise.all(images.map((image) => loadImage(image)))
@@ -92,8 +93,8 @@ export async function createFourCutImage(
   })
 
   context.fillStyle = '#2e4057'
-  context.font = '700 32px "Trebuchet MS", "Malgun Gothic", sans-serif'
-  context.fillText('우리의 특별한 순간', CANVAS_WIDTH / 2, 2290)
+  context.font = '700 30px "Trebuchet MS", "Malgun Gothic", sans-serif'
+  context.fillText('우리의 특별한 순간', CANVAS_WIDTH / 2, 1685)
 
   return canvas.toDataURL('image/jpeg', 0.92)
 }
