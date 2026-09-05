@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
-import { type BackgroundOption } from './utils/photoUtils'
+import { type BackgroundOption, PHOTO_SLOT_ASPECT_RATIO } from './utils/photoUtils'
 import { createFourCutImage } from './utils/photoUtils'
 
 type Screen = 'welcome' | 'camera' | 'selection' | 'background' | 'result'
@@ -417,7 +417,11 @@ function App() {
               key={`${image}-${index}`}
               onClick={() => handlePhotoToggle(index)}
             >
-              <img src={image} alt={`촬영한 사진 ${index + 1}`} />
+              <img
+                src={image}
+                alt={`촬영한 사진 ${index + 1}`}
+                style={{ aspectRatio: PHOTO_SLOT_ASPECT_RATIO }}
+              />
               <span className="photo-number">{index + 1}</span>
               {selectedPhotoIds.includes(index) && (
                 <span className="selection-order">
@@ -433,6 +437,7 @@ function App() {
                 key={`${capturedImages[photoIndex]}-${order}`}
                 src={capturedImages[photoIndex]}
                 alt={`선택한 사진 ${order + 1}`}
+                style={{ aspectRatio: PHOTO_SLOT_ASPECT_RATIO }}
               />
             ))}
             {Array.from({ length: 4 - selectedPhotoIds.length }).map((_, index) => (

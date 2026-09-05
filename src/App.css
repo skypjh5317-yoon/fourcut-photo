@@ -334,10 +334,10 @@
 }
 
 .selection-card img {
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 371 / 551;
   background: #dfe7e8;
   display: block;
-  height: 100%;
+  height: auto;
   object-fit: cover;
   width: 100%;
 }
@@ -401,7 +401,7 @@
 .four-preview img,
 .four-preview-empty {
   align-items: center;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 371 / 551;
   background: #e7edf0;
   color: #7b8491;
   display: flex;

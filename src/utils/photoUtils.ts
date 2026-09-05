@@ -19,13 +19,17 @@ const SIDE_MARGIN = 40
 const PHOTO_GAP = 18
 const TOP_AREA = 180
 const BOTTOM_AREA = 180
-const PHOTO_WIDTH = Math.floor((CANVAS_WIDTH - SIDE_MARGIN * 2 - PHOTO_GAP) / 2)
+const PHOTO_GRID_WIDTH = 760
+const PHOTO_WIDTH = Math.floor((PHOTO_GRID_WIDTH - PHOTO_GAP) / 2)
 const PHOTO_HEIGHT = Math.floor(
   (CANVAS_HEIGHT - TOP_AREA - BOTTOM_AREA - PHOTO_GAP) / 2,
 )
 
-const PHOTO_X_POSITIONS = [SIDE_MARGIN, SIDE_MARGIN + PHOTO_WIDTH + PHOTO_GAP]
+const PHOTO_GRID_X = (CANVAS_WIDTH - PHOTO_GRID_WIDTH) / 2
+const PHOTO_X_POSITIONS = [PHOTO_GRID_X, PHOTO_GRID_X + PHOTO_WIDTH + PHOTO_GAP]
 const PHOTO_Y_POSITIONS = [TOP_AREA, TOP_AREA + PHOTO_HEIGHT + PHOTO_GAP]
+
+export const PHOTO_SLOT_ASPECT_RATIO = `${PHOTO_WIDTH} / ${PHOTO_HEIGHT}`
 
 function loadImage(source: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -73,42 +77,6 @@ function drawCoverImage(
     y,
     width,
     height,
-  )
-}
-
-/**
- * 학생 사진은 원본 비율을 유지하면서 영역 안에 넣음
- *
- * 단순 contain을 사용하면 양옆에 지나치게 큰 흰 여백이
- * 생길 수 있으므로 사진 영역 자체를 세로형으로 설계했다.
- */
-function drawContainImage(
-  context: CanvasRenderingContext2D,
-  image: HTMLImageElement,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-) {
-  if (!image.naturalWidth || !image.naturalHeight) return
-
-  const scale = Math.min(
-    width / image.naturalWidth,
-    height / image.naturalHeight,
-  )
-
-  const drawnWidth = image.naturalWidth * scale
-  const drawnHeight = image.naturalHeight * scale
-
-  const drawnX = x + (width - drawnWidth) / 2
-  const drawnY = y + (height - drawnHeight) / 2
-
-  context.drawImage(
-    image,
-    drawnX,
-    drawnY,
-    drawnWidth,
-    drawnHeight,
   )
 }
 
@@ -305,11 +273,8 @@ export async function createFourCutImage(
       PHOTO_HEIGHT,
     )
 
-    // 실제 사진
-    //
-    // 사진은 원본 비율 유지
-    // 얼굴과 상체가 잘리지 않음
-    drawContainImage(
+    // 실제 인쇄와 동일한 중앙 cover crop
+    drawCoverImage(
       context,
       image,
       x,
