@@ -7,11 +7,11 @@ export type BackgroundOption = {
 
 export const CANVAS_WIDTH = 1200
 export const CANVAS_HEIGHT = 1776
-const SAFE_MARGIN = 80
+const SAFE_MARGIN = 70
 const PHOTO_WIDTH = CANVAS_WIDTH - SAFE_MARGIN * 2
 const PHOTO_GAP = 18
-const TOP_AREA = 270
-const BOTTOM_AREA = 100
+const TOP_AREA = 230
+const BOTTOM_AREA = 90
 const AVAILABLE_PHOTO_HEIGHT =
   CANVAS_HEIGHT - TOP_AREA - BOTTOM_AREA - PHOTO_GAP * 2
 const PHOTO_HEIGHT = Math.floor(AVAILABLE_PHOTO_HEIGHT / 3)
@@ -99,7 +99,7 @@ export async function createFourCutImage(
   context.fillStyle = '#2e4057'
   context.font = '800 58px "Trebuchet MS", "Malgun Gothic", sans-serif'
   context.textAlign = 'center'
-  context.fillText('우리의 4컷 사진', CANVAS_WIDTH / 2, 175)
+  context.fillText('우리의 3컷 사진', CANVAS_WIDTH / 2, 175)
   context.font = '700 30px "Trebuchet MS", "Malgun Gothic", sans-serif'
   context.fillText(background.name, CANVAS_WIDTH / 2, 235)
 

@@ -1036,10 +1036,10 @@
 
   .video-frame {
     flex: 0 1 auto;
-    height: min(58svh, 720px);
+    height: auto;
     min-height: 0;
     width: min(100%, 680px);
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 16 / 9;
   }
 
   .camera-instruction {
