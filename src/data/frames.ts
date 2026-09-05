@@ -27,7 +27,7 @@ export const frames: PhotoFrame[] = [
     enabled: true,
     category: 'basic',
     background: basicCream,
-    title: '우리 학교 4컷 사진관',
+    title: '',
     footerText: '',
   },
   {
@@ -36,7 +36,7 @@ export const frames: PhotoFrame[] = [
     enabled: true,
     category: 'basic',
     background: pastel,
-    title: '우리 학교 4컷 사진관',
+    title: '',
     footerText: '',
   },
   {
@@ -45,8 +45,8 @@ export const frames: PhotoFrame[] = [
     enabled: true,
     category: 'school',
     background: ourSchool,
-    title: '우리 학교 4컷 사진관',
-    subtitle: '우리 학교',
+    title: '',
+    subtitle: '',
     footerText: '',
   },
   {
@@ -55,8 +55,8 @@ export const frames: PhotoFrame[] = [
     enabled: true,
     category: 'nature',
     background: nature,
-    title: '우리 학교 4컷 사진관',
-    subtitle: '자연',
+    title: '',
+    subtitle: '',
     footerText: '',
   },
   {
@@ -65,7 +65,7 @@ export const frames: PhotoFrame[] = [
     enabled: true,
     category: 'basic',
     background: simple,
-    title: '우리 학교 4컷 사진관',
+    title: '',
     footerText: '',
   },
 
