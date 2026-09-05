@@ -1,0 +1,18 @@
+:root {
+  font-family: 'Trebuchet MS', 'Malgun Gothic', sans-serif;
+  color: #2e4057;
+  background: #fff9ed;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
