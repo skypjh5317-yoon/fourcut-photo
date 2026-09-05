@@ -128,7 +128,7 @@ function App() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: { ideal: 'environment' },
+          facingMode: { ideal: 'user' },
         },
         audio: false,
       })

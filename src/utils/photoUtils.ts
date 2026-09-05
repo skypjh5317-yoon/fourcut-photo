@@ -8,11 +8,11 @@ export type BackgroundOption = {
 export const CANVAS_WIDTH = 1200
 export const CANVAS_HEIGHT = 1776
 const SAFE_MARGIN = 60
-const PHOTO_WIDTH = CANVAS_WIDTH - SAFE_MARGIN * 2
-const PHOTO_HEIGHT = 290
-const PHOTO_X = SAFE_MARGIN
-const PHOTO_START_Y = 330
-const PHOTO_GAP = 24
+const PHOTO_WIDTH = 900
+const PHOTO_HEIGHT = 320
+const PHOTO_X = SAFE_MARGIN + (CANVAS_WIDTH - SAFE_MARGIN * 2 - PHOTO_WIDTH) / 2
+const PHOTO_START_Y = 300
+const PHOTO_GAP = 16
 
 function loadImage(source: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
