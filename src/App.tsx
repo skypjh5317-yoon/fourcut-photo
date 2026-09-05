@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
-import { type BackgroundOption, PHOTO_SLOT_ASPECT_RATIO } from './utils/photoUtils'
+import { enabledFrames, type PhotoFrame } from './data/frames'
+import { PHOTO_SLOT_ASPECT_RATIO } from './utils/photoUtils'
 import { createFourCutImage } from './utils/photoUtils'
 
 type Screen = 'welcome' | 'camera' | 'selection' | 'background' | 'result'
@@ -10,43 +11,10 @@ type CameraFacing = 'user' | 'environment'
 
 const PHOTO_COUNT = 6
 
-const BACKGROUND_OPTIONS: BackgroundOption[] = [
-  {
-    id: 'default',
-    name: '기본 배경',
-    image: '/backgrounds/default.png',
-    color: '#ffe4b8',
-  },
-  {
-    id: 'sports-day',
-    name: '운동회',
-    image: '/backgrounds/sports-day.png',
-    color: '#c8e9f2',
-  },
-  {
-    id: 'school-event',
-    name: '학교 행사',
-    image: '/backgrounds/school-event.png',
-    color: '#f8d8e3',
-  },
-  {
-    id: 'ecology',
-    name: '생태·환경',
-    image: '/backgrounds/ecology.png',
-    color: '#d9f1e7',
-  },
-  {
-    id: 'festival',
-    name: '축제',
-    image: '/backgrounds/festival.png',
-    color: '#f6e6ae',
-  },
-]
-
 function App() {
   const [screen, setScreen] = useState<Screen>('welcome')
-  const [selectedBackground, setSelectedBackground] = useState<BackgroundOption>(
-    BACKGROUND_OPTIONS[0],
+  const [selectedFrame, setSelectedFrame] = useState<PhotoFrame>(
+    enabledFrames[0],
   )
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>('idle')
   const [cameraError, setCameraError] = useState('')
@@ -278,7 +246,7 @@ function App() {
     try {
       setIsComposing(true)
       const selectedImages = selectedPhotoIds.map((index) => capturedImages[index])
-      const image = await createFourCutImage(selectedImages, selectedBackground)
+      const image = await createFourCutImage(selectedImages, selectedFrame)
       setFinalImage(image)
       setFramePreview(image)
       setScreen('result')
@@ -294,7 +262,7 @@ function App() {
     try {
       setIsComposing(true)
       const selectedImages = selectedPhotoIds.map((index) => capturedImages[index])
-      const image = await createFourCutImage(selectedImages, selectedBackground)
+      const image = await createFourCutImage(selectedImages, selectedFrame)
       setFramePreview(image)
       setScreen('background')
     } catch {
@@ -304,12 +272,12 @@ function App() {
     }
   }
 
-  const handleBackgroundSelect = async (background: BackgroundOption) => {
-    setSelectedBackground(background)
+  const handleFrameSelect = async (frame: PhotoFrame) => {
+    setSelectedFrame(frame)
     try {
       setIsComposing(true)
       const selectedImages = selectedPhotoIds.map((index) => capturedImages[index])
-      const image = await createFourCutImage(selectedImages, background)
+      const image = await createFourCutImage(selectedImages, frame)
       setFramePreview(image)
     } catch {
       setCameraError('프레임 미리보기를 만드는 중 문제가 생겼어요.')
@@ -497,27 +465,30 @@ function App() {
             )}
           </div>
           <div className="background-grid" aria-label="사진 프레임 목록">
-            {BACKGROUND_OPTIONS.map((background) => (
+            {enabledFrames.map((frame) => (
               <button
                 type="button"
                 className={`background-card ${
-                  selectedBackground.id === background.id ? 'selected' : ''
+                  selectedFrame.id === frame.id ? 'selected' : ''
                 }`}
-                key={background.id}
-                onClick={() => void handleBackgroundSelect(background)}
+                key={frame.id}
+                onClick={() => void handleFrameSelect(frame)}
               >
-                <span className="background-preview" style={{ backgroundColor: background.color }}>
+                <span
+                  className="background-preview"
+                  style={{ backgroundColor: frame.background ?? '#fff4dc' }}
+                >
                   <span className="background-placeholder" aria-hidden="true">✦</span>
                 </span>
                 <span className="background-name">
-                  {selectedBackground.id === background.id && <span aria-hidden="true">✓ </span>}
-                  {background.name}
+                  {selectedFrame.id === frame.id && <span aria-hidden="true">✓ </span>}
+                  {frame.name}
                 </span>
               </button>
             ))}
           </div>
           <p className="selected-background" aria-live="polite">
-            ✓ {selectedBackground.name}
+            ✓ {selectedFrame.name}
           </p>
           <button
             type="button"

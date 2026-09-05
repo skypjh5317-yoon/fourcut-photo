@@ -1,9 +1,4 @@
-export type BackgroundOption = {
-  id: string
-  name: string
-  image: string
-  color: string
-}
+import type { PhotoFrame } from '../data/frames'
 
 /**
  * Canon SELPHY CP1500 10x15cm 세로 인쇄를 고려한 캔버스
@@ -44,7 +39,8 @@ const PHOTO_Y_POSITIONS = [PHOTO_START_Y, PHOTO_START_Y + PHOTO_HEIGHT + PHOTO_G
 
 export const PHOTO_SLOT_ASPECT_RATIO = '1 / 1'
 
-function loadImage(source: string): Promise<HTMLImageElement | null> {
+function loadImage(source?: string): Promise<HTMLImageElement | null> {
+  if (!source || source.startsWith('#')) return Promise.resolve(null)
   return new Promise((resolve) => {
     const image = new Image()
 
@@ -101,7 +97,7 @@ function drawCoverImage(
  */
 function drawPhotoBackground(
   context: CanvasRenderingContext2D,
-  background: BackgroundOption,
+  frame: PhotoFrame,
   x: number,
   y: number,
   width: number,
@@ -116,7 +112,7 @@ function drawPhotoBackground(
   context.roundRect(x, y, width, height, radius)
   context.clip()
 
-  context.fillStyle = background.color
+  context.fillStyle = frame.background ?? '#fff4dc'
   context.fillRect(x, y, width, height)
 
   context.restore()
@@ -160,7 +156,7 @@ function drawPhotoFrame(
  */
 export async function createFourCutImage(
   images: string[],
-  background: BackgroundOption,
+  frame: PhotoFrame,
 ): Promise<string> {
   const canvas = document.createElement('canvas')
 
@@ -177,7 +173,7 @@ export async function createFourCutImage(
   // 1. 배경
   // --------------------------------------------------
 
-  const backgroundImage = await loadImage(background.image)
+  const backgroundImage = await loadImage(frame.background)
 
   if (backgroundImage) {
     drawCoverImage(
@@ -199,7 +195,7 @@ export async function createFourCutImage(
     )
   } else {
     // 배경 이미지가 없을 경우 선택한 색상 사용
-    context.fillStyle = background.color
+    context.fillStyle = frame.background ?? '#fff4dc'
     context.fillRect(
       0,
       0,
@@ -233,20 +229,14 @@ export async function createFourCutImage(
   context.font =
     '800 52px "Trebuchet MS", "Malgun Gothic", sans-serif'
 
-  context.fillText(
-    '우리 학교 4컷 사진관',
-    CANVAS_WIDTH / 2,
-    110,
-  )
+  context.fillText(frame.title ?? '우리 학교 4컷 사진관', CANVAS_WIDTH / 2, 110)
 
   context.font =
     '700 28px "Trebuchet MS", "Malgun Gothic", sans-serif'
 
-  context.fillText(
-    background.name,
-    CANVAS_WIDTH / 2,
-    165,
-  )
+  if (frame.subtitle) {
+    context.fillText(frame.subtitle, CANVAS_WIDTH / 2, 165)
+  }
 
   // --------------------------------------------------
   // 3. 사진 불러오기
@@ -255,7 +245,7 @@ export async function createFourCutImage(
   const loadedPhotos = await Promise.all(images.slice(0, 4).map((image) => loadImage(image)))
 
   // --------------------------------------------------
-  // 4. 사진 3장 배치
+  // 4. 사진 4장 배치
   // --------------------------------------------------
 
   loadedPhotos.forEach((image, index) => {
@@ -270,7 +260,7 @@ export async function createFourCutImage(
     // 흰색이 아니라 선택한 배경색으로 처리
     drawPhotoBackground(
       context,
-      background,
+      frame,
       x,
       y,
       PHOTO_WIDTH,
@@ -297,6 +287,11 @@ export async function createFourCutImage(
     )
   })
 
+  const overlayImage = await loadImage(frame.overlay)
+  if (overlayImage) {
+    context.drawImage(overlayImage, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+  }
+
   // --------------------------------------------------
   // 5. 하단 문구
   // --------------------------------------------------
@@ -309,11 +304,9 @@ export async function createFourCutImage(
   context.textAlign = 'center'
   context.textBaseline = 'middle'
 
-  context.fillText(
-    '우리 학교의 특별한 순간',
-    CANVAS_WIDTH / 2,
-    CANVAS_HEIGHT - 40,
-  )
+  if (frame.footerText) {
+    context.fillText(frame.footerText, CANVAS_WIDTH / 2, CANVAS_HEIGHT - 40)
+  }
 
   // --------------------------------------------------
   // 6. JPEG 변환
