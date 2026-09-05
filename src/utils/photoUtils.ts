@@ -6,29 +6,26 @@ export type BackgroundOption = {
 }
 
 /**
- * Canon SELPHY CP1500 4×6 인쇄를 고려한 세로형 캔버스
- * 1200 × 1776
+ * Canon SELPHY CP1500 10x15cm 인쇄를 고려한 가로형 캔버스
+ * 1800 x 1200, 3:2 비율
  */
-export const CANVAS_WIDTH = 1200
-export const CANVAS_HEIGHT = 1776
+export const CANVAS_WIDTH = 1800
+export const CANVAS_HEIGHT = 1200
 
 // 전체 디자인 여백
-const SIDE_MARGIN = 70
+const SIDE_MARGIN = 100
 
 // 사진 영역
-// 세로 사진을 최대한 크게 보여주되,
-// 3장의 사진이 모두 들어갈 수 있도록 구성
-const PHOTO_WIDTH = 680
-const PHOTO_HEIGHT = 455
+const PHOTO_GAP = 24
+const TOP_AREA = 140
+const BOTTOM_AREA = 80
+const PHOTO_WIDTH = Math.floor((CANVAS_WIDTH - SIDE_MARGIN * 2 - PHOTO_GAP) / 2)
+const PHOTO_HEIGHT = Math.floor(
+  (CANVAS_HEIGHT - TOP_AREA - BOTTOM_AREA - PHOTO_GAP) / 2,
+)
 
-// 사진 사이 간격
-const PHOTO_GAP = 22
-
-// 사진 시작 위치
-const PHOTO_START_Y = 255
-
-// 사진 X 위치
-const PHOTO_X = (CANVAS_WIDTH - PHOTO_WIDTH) / 2
+const PHOTO_X_POSITIONS = [SIDE_MARGIN, SIDE_MARGIN + PHOTO_WIDTH + PHOTO_GAP]
+const PHOTO_Y_POSITIONS = [TOP_AREA, TOP_AREA + PHOTO_HEIGHT + PHOTO_GAP]
 
 function loadImage(source: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -174,11 +171,11 @@ function drawPhotoFrame(
 }
 
 /**
- * 3컷 포토부스 이미지 생성
+ * 2x2 포토부스 이미지 생성
  *
  * images:
  * - 촬영된 사진 배열
- * - 앞에서부터 최대 3장 사용
+ * - 앞에서부터 최대 4장 사용
  */
 export async function createFourCutImage(
   images: string[],
@@ -256,7 +253,7 @@ export async function createFourCutImage(
     '800 52px "Trebuchet MS", "Malgun Gothic", sans-serif'
 
   context.fillText(
-    '우리의 3컷 사진',
+    '우리 학교 4컷 사진관',
     CANVAS_WIDTH / 2,
     110,
   )
@@ -274,11 +271,7 @@ export async function createFourCutImage(
   // 3. 사진 불러오기
   // --------------------------------------------------
 
-  const loadedPhotos = await Promise.all(
-    images
-      .slice(0, 3)
-      .map((image) => loadImage(image)),
-  )
+  const loadedPhotos = await Promise.all(images.slice(0, 4).map((image) => loadImage(image)))
 
   // --------------------------------------------------
   // 4. 사진 3장 배치
@@ -287,9 +280,8 @@ export async function createFourCutImage(
   loadedPhotos.forEach((image, index) => {
     if (!image) return
 
-    const y =
-      PHOTO_START_Y +
-      index * (PHOTO_HEIGHT + PHOTO_GAP)
+    const x = PHOTO_X_POSITIONS[index % 2]
+    const y = PHOTO_Y_POSITIONS[Math.floor(index / 2)]
 
     // 사진 영역의 배경
     //
@@ -298,7 +290,7 @@ export async function createFourCutImage(
     drawPhotoBackground(
       context,
       background,
-      PHOTO_X,
+      x,
       y,
       PHOTO_WIDTH,
       PHOTO_HEIGHT,
@@ -307,7 +299,7 @@ export async function createFourCutImage(
     // 흰색 포토 프레임
     drawPhotoFrame(
       context,
-      PHOTO_X,
+      x,
       y,
       PHOTO_WIDTH,
       PHOTO_HEIGHT,
@@ -320,7 +312,7 @@ export async function createFourCutImage(
     drawContainImage(
       context,
       image,
-      PHOTO_X,
+      x,
       y,
       PHOTO_WIDTH,
       PHOTO_HEIGHT,
@@ -340,9 +332,9 @@ export async function createFourCutImage(
   context.textBaseline = 'middle'
 
   context.fillText(
-    '우리의 특별한 순간',
+    '우리 학교의 특별한 순간',
     CANVAS_WIDTH / 2,
-    CANVAS_HEIGHT - 48,
+    CANVAS_HEIGHT - 40,
   )
 
   // --------------------------------------------------
