@@ -112,7 +112,9 @@ function drawPhotoBackground(
   context.roundRect(x, y, width, height, radius)
   context.clip()
 
-  context.fillStyle = frame.background ?? '#fff4dc'
+  context.fillStyle = frame.background?.startsWith('#')
+    ? frame.background
+    : '#fff4dc'
   context.fillRect(x, y, width, height)
 
   context.restore()
@@ -195,7 +197,9 @@ export async function createFourCutImage(
     )
   } else {
     // 배경 이미지가 없을 경우 선택한 색상 사용
-    context.fillStyle = frame.background ?? '#fff4dc'
+    context.fillStyle = frame.background?.startsWith('#')
+      ? frame.background
+      : '#fff4dc'
     context.fillRect(
       0,
       0,

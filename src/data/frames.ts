@@ -1,3 +1,9 @@
+import basicCream from '../assets/frames/basic-cream.png'
+import pastel from '../assets/frames/pastel.png'
+import ourSchool from '../assets/frames/our-school.png'
+import nature from '../assets/frames/nature.png'
+import simple from '../assets/frames/simple.png'
+
 export interface PhotoFrame {
   id: string
   name: string
@@ -10,7 +16,6 @@ export interface PhotoFrame {
   subtitle?: string
   footerText?: string
 }
-
 // ==========================
 // 기본 프레임
 // ==========================
@@ -21,7 +26,7 @@ export const frames: PhotoFrame[] = [
     name: '기본 크림',
     enabled: true,
     category: 'basic',
-    background: '#fff4dc',
+    background: basicCream,
     title: '우리 학교 4컷 사진관',
     footerText: '',
   },
@@ -30,7 +35,7 @@ export const frames: PhotoFrame[] = [
     name: '파스텔',
     enabled: true,
     category: 'basic',
-    background: '#f8e9f0',
+    background: pastel,
     title: '우리 학교 4컷 사진관',
     footerText: '',
   },
@@ -39,7 +44,7 @@ export const frames: PhotoFrame[] = [
     name: '우리 학교',
     enabled: true,
     category: 'school',
-    background: '#e5f1e8',
+    background: ourSchool,
     title: '우리 학교 4컷 사진관',
     subtitle: '우리 학교',
     footerText: '',
@@ -49,7 +54,7 @@ export const frames: PhotoFrame[] = [
     name: '자연',
     enabled: true,
     category: 'nature',
-    background: '#dff2e6',
+    background: nature,
     title: '우리 학교 4컷 사진관',
     subtitle: '자연',
     footerText: '',
@@ -59,7 +64,7 @@ export const frames: PhotoFrame[] = [
     name: '심플',
     enabled: true,
     category: 'basic',
-    background: '#f7f7f4',
+    background: simple,
     title: '우리 학교 4컷 사진관',
     footerText: '',
   },
