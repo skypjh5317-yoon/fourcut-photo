@@ -1,66 +1,57 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
+import {
+  type BackgroundOption,
+  createFourCutImage,
+} from './utils/photoUtils'
 
-type Screen = 'welcome' | 'camera' | 'result'
+type Screen = 'welcome' | 'background' | 'camera' | 'result'
 type CameraStatus = 'idle' | 'loading' | 'ready' | 'error'
 type CapturePhase = 'idle' | 'countdown' | 'flash' | 'preparing'
 
 const PHOTO_COUNT = 4
 
-function createFourCutImage(images: string[]): Promise<string> {
-  const width = 1200
-  const gap = 24
-  const photoHeight = 680
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = photoHeight * PHOTO_COUNT + gap * (PHOTO_COUNT - 1)
-  const context = canvas.getContext('2d')
-
-  if (!context) {
-    return Promise.reject(new Error('Canvas를 사용할 수 없습니다.'))
-  }
-
-  context.fillStyle = '#fff9ed'
-  context.fillRect(0, 0, canvas.width, canvas.height)
-
-  return Promise.all(
-    images.map(
-      (source) =>
-        new Promise<HTMLImageElement>((resolve, reject) => {
-          const image = new Image()
-          image.onload = () => resolve(image)
-          image.onerror = () => reject(new Error('사진을 불러올 수 없습니다.'))
-          image.src = source
-        }),
-    ),
-  ).then((loadedImages) => {
-    loadedImages.forEach((image, index) => {
-      const scale = Math.max(width / image.naturalWidth, photoHeight / image.naturalHeight)
-      const sourceWidth = width / scale
-      const sourceHeight = photoHeight / scale
-      const sourceX = (image.naturalWidth - sourceWidth) / 2
-      const sourceY = (image.naturalHeight - sourceHeight) / 2
-      const destinationY = index * (photoHeight + gap)
-
-      context.drawImage(
-        image,
-        sourceX,
-        sourceY,
-        sourceWidth,
-        sourceHeight,
-        0,
-        destinationY,
-        width,
-        photoHeight,
-      )
-    })
-
-    return canvas.toDataURL('image/jpeg', 0.92)
-  })
-}
+const BACKGROUND_OPTIONS: BackgroundOption[] = [
+  {
+    id: 'default',
+    name: '기본 배경',
+    image: '/backgrounds/default.png',
+    color: '#ffe4b8',
+  },
+  {
+    id: 'sports-day',
+    name: '운동회',
+    image: '/backgrounds/sports-day.png',
+    color: '#c8e9f2',
+  },
+  {
+    id: 'school-event',
+    name: '학교 행사',
+    image: '/backgrounds/school-event.png',
+    color: '#f8d8e3',
+  },
+  {
+    id: 'ecology',
+    name: '생태·환경',
+    image: '/backgrounds/ecology.png',
+    color: '#d9f1e7',
+  },
+  {
+    id: 'festival',
+    name: '축제',
+    image: '/backgrounds/festival.png',
+    color: '#f6e6ae',
+  },
+]
 
 function App() {
   const [screen, setScreen] = useState<Screen>('welcome')
+  const [selectedBackground, setSelectedBackground] = useState<BackgroundOption>(
+    BACKGROUND_OPTIONS[0],
+  )
+  const [backgroundAvailability, setBackgroundAvailability] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(BACKGROUND_OPTIONS.map((background) => [background.id, true])),
+  )
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>('idle')
   const [cameraError, setCameraError] = useState('')
   const [capturedImages, setCapturedImages] = useState<string[]>([])
@@ -101,7 +92,7 @@ function App() {
     setCountdown(null)
   }
 
-  const handleStart = async () => {
+  const startCamera = async () => {
     resetCaptureState()
     stopCamera()
     const requestId = requestIdRef.current
@@ -156,7 +147,7 @@ function App() {
 
   const finishCapture = async (images: string[], sequence: number) => {
     try {
-      const combinedImage = await createFourCutImage(images)
+      const combinedImage = await createFourCutImage(images, selectedBackground)
       if (sequence !== captureSequenceRef.current) {
         return
       }
@@ -237,7 +228,7 @@ function App() {
 
   const handleRetake = () => {
     resetCaptureState()
-    setScreen('welcome')
+    void startCamera()
   }
 
   const handlePrint = () => {
@@ -249,7 +240,14 @@ function App() {
     stopCamera()
     setCameraStatus('idle')
     setCameraError('')
-    setScreen('welcome')
+    setScreen(screen === 'camera' ? 'background' : 'welcome')
+  }
+
+  const handleBackgroundImageError = (backgroundId: string) => {
+    setBackgroundAvailability((current) => ({
+      ...current,
+      [backgroundId]: false,
+    }))
   }
 
   useEffect(() => {
@@ -286,6 +284,63 @@ function App() {
             </button>
           </div>
           {finalImage && <img className="combined-image" src={finalImage} alt="완성된 4컷 사진" />}
+        </section>
+      </main>
+    )
+  }
+
+  if (screen === 'background') {
+    return (
+      <main className="background-screen">
+        <header className="background-header">
+          <button type="button" className="back-button light-back-button" onClick={handleBack}>
+            ← 뒤로
+          </button>
+          <div>
+            <p className="eyebrow">SPECIAL MOMENTS</p>
+            <h1>🎨 사진 배경을 선택해주세요</h1>
+            <p>사진에 사용할 배경을 골라보세요!</p>
+          </div>
+          <div className="header-spacer" aria-hidden="true" />
+        </header>
+
+        <section className="background-content">
+          <div className="background-grid" aria-label="사진 배경 목록">
+            {BACKGROUND_OPTIONS.map((background) => (
+              <button
+                type="button"
+                className={`background-card ${
+                  selectedBackground.id === background.id ? 'selected' : ''
+                }`}
+                key={background.id}
+                onClick={() => setSelectedBackground(background)}
+              >
+                <span className="background-preview" style={{ backgroundColor: background.color }}>
+                  {backgroundAvailability[background.id] ? (
+                    <img
+                      src={background.image}
+                      alt=""
+                      onError={() => handleBackgroundImageError(background.id)}
+                    />
+                  ) : (
+                    <span className="background-placeholder" aria-hidden="true">
+                      ✦
+                    </span>
+                  )}
+                </span>
+                <span className="background-name">
+                  {selectedBackground.id === background.id && <span aria-hidden="true">✓ </span>}
+                  {background.name}
+                </span>
+              </button>
+            ))}
+          </div>
+          <p className="selected-background" aria-live="polite">
+            ✓ {selectedBackground.name}
+          </p>
+          <button type="button" className="background-start-button" onClick={() => void startCamera()}>
+            📸 이 배경으로 촬영하기
+          </button>
         </section>
       </main>
     )
@@ -372,7 +427,7 @@ function App() {
         <div className="welcome-copy">
           <h2 id="welcome-message">친구들과 함께 4장의 사진을 찍어보세요!</h2>
           <p>웃고, 포즈를 취하고, 우리만의 추억을 만들어 보아요.</p>
-          <button type="button" className="start-button" onClick={handleStart}>
+          <button type="button" className="start-button" onClick={() => setScreen('background')}>
             <span aria-hidden="true">📷</span>
             촬영 시작
           </button>
