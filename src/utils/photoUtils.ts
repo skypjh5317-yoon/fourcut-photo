@@ -7,12 +7,16 @@ export type BackgroundOption = {
 
 export const CANVAS_WIDTH = 1200
 export const CANVAS_HEIGHT = 1776
-const SAFE_MARGIN = 60
-const PHOTO_WIDTH = 900
-const PHOTO_HEIGHT = 420
-const PHOTO_X = SAFE_MARGIN + (CANVAS_WIDTH - SAFE_MARGIN * 2 - PHOTO_WIDTH) / 2
-const PHOTO_START_Y = 290
-const PHOTO_GAP = 20
+const SAFE_MARGIN = 80
+const PHOTO_WIDTH = CANVAS_WIDTH - SAFE_MARGIN * 2
+const PHOTO_GAP = 18
+const TOP_AREA = 270
+const BOTTOM_AREA = 100
+const AVAILABLE_PHOTO_HEIGHT =
+  CANVAS_HEIGHT - TOP_AREA - BOTTOM_AREA - PHOTO_GAP * 2
+const PHOTO_HEIGHT = Math.floor(AVAILABLE_PHOTO_HEIGHT / 3)
+const PHOTO_X = (CANVAS_WIDTH - PHOTO_WIDTH) / 2
+const PHOTO_START_Y = TOP_AREA
 
 function loadImage(source: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -111,7 +115,7 @@ export async function createFourCutImage(
 
   context.fillStyle = '#2e4057'
   context.font = '700 30px "Trebuchet MS", "Malgun Gothic", sans-serif'
-  context.fillText('우리의 특별한 순간', CANVAS_WIDTH / 2, 1685)
+  context.fillText('우리의 특별한 순간', CANVAS_WIDTH / 2, CANVAS_HEIGHT - 55)
 
   return canvas.toDataURL('image/jpeg', 0.92)
 }
