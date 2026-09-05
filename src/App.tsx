@@ -129,9 +129,9 @@ function App() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: 'user' },
-          aspectRatio: { ideal: 16 / 9 },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+          aspectRatio: { ideal: 3 / 4 },
+          width: { ideal: 1080 },
+          height: { ideal: 1440 },
         },
         audio: false,
       })
@@ -160,16 +160,43 @@ function App() {
       return null
     }
 
+    const captureWidth = 1080
+    const captureHeight = 1440
+    const targetAspectRatio = captureWidth / captureHeight
+    const sourceAspectRatio = video.videoWidth / video.videoHeight
+    let sourceWidth = video.videoWidth
+    let sourceHeight = video.videoHeight
+    let sourceX = 0
+    let sourceY = 0
+
+    if (sourceAspectRatio > targetAspectRatio) {
+      sourceWidth = video.videoHeight * targetAspectRatio
+      sourceX = (video.videoWidth - sourceWidth) / 2
+    } else if (sourceAspectRatio < targetAspectRatio) {
+      sourceHeight = video.videoWidth / targetAspectRatio
+      sourceY = (video.videoHeight - sourceHeight) / 2
+    }
+
     const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
+    canvas.width = captureWidth
+    canvas.height = captureHeight
     const context = canvas.getContext('2d')
 
     if (!context) {
       return null
     }
 
-    context.drawImage(video, 0, 0, canvas.width, canvas.height)
+    context.drawImage(
+      video,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    )
     return canvas.toDataURL('image/jpeg', 0.92)
   }
 
