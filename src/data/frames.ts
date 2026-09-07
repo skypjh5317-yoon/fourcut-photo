@@ -1,8 +1,8 @@
-import basicCream from '../assets/frames/basic-cream.png'
+import basic from '../assets/frames/basic.png'
 import pastel from '../assets/frames/pastel.png'
 import ourSchool from '../assets/frames/our-school.png'
 import nature from '../assets/frames/nature.png'
-import simple from '../assets/frames/simple.png'
+import check from '../assets/frames/check.png'
 
 export interface PhotoFrame {
   id: string
@@ -22,11 +22,11 @@ export interface PhotoFrame {
 
 export const frames: PhotoFrame[] = [
   {
-    id: 'basic-cream',
-    name: '기본 크림',
+    id: 'basic',
+    name: '기본',
     enabled: true,
     category: 'basic',
-    background: basicCream,
+    background: basic,
     title: '',
     footerText: '',
   },
@@ -60,11 +60,11 @@ export const frames: PhotoFrame[] = [
     footerText: '',
   },
   {
-    id: 'simple',
-    name: '심플',
+    id: 'check',
+    name: '체크',
     enabled: true,
     category: 'basic',
-    background: simple,
+    background: check,
     title: '',
     footerText: '',
   },
