@@ -1294,14 +1294,22 @@
   }
 }
 
+@page {
+  size: 100mm 148mm;
+  margin: 0;
+}
+
 @media print {
   body {
     background: #fff;
+    margin: 0;
   }
 
   .result-screen {
+    height: 148mm;
     min-height: auto;
     padding: 0;
+    width: 100mm;
   }
 
   .result-header,
@@ -1312,18 +1320,31 @@
 
   .result-content {
     display: block;
+    height: 148mm;
     padding: 0;
+    width: 100mm;
+  }
+
+  .print-page {
+    height: 148mm;
+    margin: 0;
+    overflow: hidden;
+    padding: 0;
+    width: 100mm;
   }
 
   .combined-image {
     border: 0;
     box-shadow: none;
     display: block;
-    height: auto;
+    height: 148mm;
     margin: 0;
     max-height: none;
-    max-width: 100%;
-    width: 100%;
+    max-width: none;
+    padding: 0;
+    width: 100mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 

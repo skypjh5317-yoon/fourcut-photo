@@ -294,14 +294,6 @@ function App() {
   }
 
   const handlePrint = () => {
-    window.addEventListener(
-      'afterprint',
-      () => {
-        resetCaptureState()
-        setScreen('welcome')
-      },
-      { once: true },
-    )
     window.print()
   }
 
@@ -338,7 +330,9 @@ function App() {
         </header>
 
         <section className="result-content">
-          <img className="combined-image" src={finalImage} alt="완성된 4컷 사진" />
+          <div className="print-page">
+            <img className="combined-image" src={finalImage} alt="완성된 4컷 사진" />
+          </div>
           <div className="result-actions">
             <button type="button" className="retake-button" onClick={() => setScreen('background')}>
               ← 다시 선택
@@ -350,7 +344,7 @@ function App() {
               🖨️ 인쇄하기
             </button>
             <button type="button" className="home-button" onClick={handleHome}>
-              처음으로
+              ← 처음으로 돌아가기
             </button>
           </div>
           <div className="selected-thumbnails" aria-label="선택한 사진">
