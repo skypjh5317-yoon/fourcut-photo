@@ -2,7 +2,7 @@
   {
     "id": "basic",
     "name": "기본",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 1,
     "image": "/frames/basic.png",
     "category": "basic",
@@ -22,7 +22,7 @@
   {
     "id": "our-school",
     "name": "우리 학교",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 3,
     "image": "/frames/our-school.png",
     "category": "school",
