@@ -33,7 +33,7 @@
   {
     "id": "nature",
     "name": "자연",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 4,
     "image": "/frames/nature.png",
     "category": "nature",
