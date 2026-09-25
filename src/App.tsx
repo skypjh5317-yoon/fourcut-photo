@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
-import { enabledFrames, type PhotoFrame } from './data/frames'
+import type { PhotoFrame } from './data/frames'
 import { PHOTO_SLOT_ASPECT_RATIO } from './utils/photoUtils'
 import { createFourCutImage } from './utils/photoUtils'
 
@@ -13,9 +13,9 @@ const PHOTO_COUNT = 6
 
 function App() {
   const [screen, setScreen] = useState<Screen>('welcome')
-  const [selectedFrame, setSelectedFrame] = useState<PhotoFrame>(
-    enabledFrames[0],
-  )
+  const [frames, setFrames] = useState<PhotoFrame[]>([])
+  const [selectedFrame, setSelectedFrame] = useState<PhotoFrame | null>(null)
+  const [framesError, setFramesError] = useState('')
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>('idle')
   const [cameraError, setCameraError] = useState('')
   const [capturedImages, setCapturedImages] = useState<string[]>([])
@@ -32,6 +32,10 @@ function App() {
   const requestIdRef = useRef(0)
   const captureSequenceRef = useRef(0)
   const timerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+  const enabledFrames = useMemo(
+    () => frames.filter((frame) => frame.enabled).sort((a, b) => a.sortOrder - b.sortOrder),
+    [frames],
+  )
 
   const clearTimer = () => {
     if (timerRef.current !== null) {
@@ -241,7 +245,7 @@ function App() {
   }
 
   const handleFrameContinue = async () => {
-    if (selectedPhotoIds.length !== 4) return
+    if (selectedPhotoIds.length !== 4 || !selectedFrame) return
 
     try {
       setIsComposing(true)
@@ -258,7 +262,7 @@ function App() {
   }
 
   const handleOpenBackground = async () => {
-    if (selectedPhotoIds.length !== 4) return
+    if (selectedPhotoIds.length !== 4 || !selectedFrame) return
     try {
       setIsComposing(true)
       const selectedImages = selectedPhotoIds.map((index) => capturedImages[index])
@@ -309,6 +313,23 @@ function App() {
     setCameraError('')
     setScreen(screen === 'camera' ? 'welcome' : 'welcome')
   }
+
+  useEffect(() => {
+    const loadFrames = async () => {
+      try {
+        const response = await fetch('/frames/frames.json')
+        if (!response.ok) throw new Error('프레임을 불러오지 못했습니다.')
+        const loadedFrames = (await response.json()) as PhotoFrame[]
+        const sortedFrames = loadedFrames.sort((a, b) => a.sortOrder - b.sortOrder)
+        setFrames(sortedFrames)
+        setSelectedFrame((current) => current ?? sortedFrames.find((frame) => frame.enabled) ?? null)
+      } catch {
+        setFramesError('프레임을 불러오지 못했습니다.')
+      }
+    }
+
+    void loadFrames()
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -459,11 +480,15 @@ function App() {
             )}
           </div>
           <div className="background-grid" aria-label="사진 프레임 목록">
+            {framesError && <p className="camera-message camera-error">{framesError}</p>}
+            {!framesError && enabledFrames.length === 0 && (
+              <p className="camera-message">사용 가능한 프레임이 없습니다.</p>
+            )}
             {enabledFrames.map((frame) => (
               <button
                 type="button"
                 className={`background-card ${
-                  selectedFrame.id === frame.id ? 'selected' : ''
+                  selectedFrame?.id === frame.id ? 'selected' : ''
                 }`}
                 key={frame.id}
                 onClick={() => void handleFrameSelect(frame)}
@@ -475,19 +500,19 @@ function App() {
                   <span className="background-placeholder" aria-hidden="true">✦</span>
                 </span>
                 <span className="background-name">
-                  {selectedFrame.id === frame.id && <span aria-hidden="true">✓ </span>}
+                  {selectedFrame?.id === frame.id && <span aria-hidden="true">✓ </span>}
                   {frame.name}
                 </span>
               </button>
             ))}
           </div>
           <p className="selected-background" aria-live="polite">
-            ✓ {selectedFrame.name}
+            {selectedFrame ? `✓ ${selectedFrame.name}` : '프레임을 선택해주세요.'}
           </p>
           <button
             type="button"
             className="background-start-button"
-            disabled={isComposing || selectedPhotoIds.length !== 4}
+            disabled={isComposing || selectedPhotoIds.length !== 4 || !selectedFrame}
             onClick={() => void handleFrameContinue()}
           >
             {isComposing ? '사진을 만드는 중...' : '🎉 이 프레임으로 완성하기'}

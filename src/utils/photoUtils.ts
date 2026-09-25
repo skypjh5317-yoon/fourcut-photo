@@ -175,7 +175,7 @@ export async function createFourCutImage(
   // 1. 배경
   // --------------------------------------------------
 
-  const backgroundImage = await loadImage(frame.background)
+  const backgroundImage = await loadImage(frame.background ?? frame.image)
 
   if (backgroundImage) {
     drawCoverImage(

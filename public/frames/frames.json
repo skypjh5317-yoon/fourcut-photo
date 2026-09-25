@@ -1,0 +1,54 @@
+[
+  {
+    "id": "basic",
+    "name": "기본",
+    "enabled": true,
+    "sortOrder": 1,
+    "image": "/frames/basic.png",
+    "category": "basic",
+    "title": "",
+    "footerText": ""
+  },
+  {
+    "id": "pastel",
+    "name": "파스텔",
+    "enabled": true,
+    "sortOrder": 2,
+    "image": "/frames/pastel.png",
+    "category": "basic",
+    "title": "",
+    "footerText": ""
+  },
+  {
+    "id": "our-school",
+    "name": "우리 학교",
+    "enabled": true,
+    "sortOrder": 3,
+    "image": "/frames/our-school.png",
+    "category": "school",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
+  },
+  {
+    "id": "nature",
+    "name": "자연",
+    "enabled": true,
+    "sortOrder": 4,
+    "image": "/frames/nature.png",
+    "category": "nature",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
+  },
+  {
+    "id": "check",
+    "name": "체크",
+    "enabled": true,
+    "sortOrder": 5,
+    "image": "/frames/check.png",
+    "category": "basic",
+    "title": "",
+    "footerText": ""
+  }
+]
