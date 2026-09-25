@@ -12,7 +12,7 @@
   {
     "id": "pastel",
     "name": "파스텔",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 2,
     "image": "/frames/pastel.png",
     "category": "basic",
