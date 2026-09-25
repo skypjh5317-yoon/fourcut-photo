@@ -2,7 +2,7 @@
   {
     "id": "basic",
     "name": "기본",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 1,
     "image": "/frames/basic.png",
     "category": "basic",
@@ -12,7 +12,7 @@
   {
     "id": "pastel",
     "name": "파스텔",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 2,
     "image": "/frames/pastel.png",
     "category": "basic",
@@ -22,7 +22,7 @@
   {
     "id": "our-school",
     "name": "우리 학교",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 3,
     "image": "/frames/our-school.png",
     "category": "school",
@@ -33,7 +33,7 @@
   {
     "id": "nature",
     "name": "자연",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 4,
     "image": "/frames/nature.png",
     "category": "nature",
