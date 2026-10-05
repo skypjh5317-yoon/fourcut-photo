@@ -50,5 +50,61 @@
     "category": "basic",
     "title": "",
     "footerText": ""
+  },
+  {
+    "id": "han0",
+    "name": "한글날1",
+    "enabled": false,
+    "sortOrder": 6,
+    "image": "/frames/han0.png"
+  },
+  {
+    "id": "han1",
+    "name": "한글날2",
+    "enabled": false,
+    "sortOrder": 7,
+    "image": "/frames/han1.png"
+  },
+  {
+    "id": "han2",
+    "name": "한글날3",
+    "enabled": false,
+    "sortOrder": 8,
+    "image": "/frames/han2.png"
+  },
+  {
+    "id": "han3",
+    "name": "한글날4",
+    "enabled": false,
+    "sortOrder": 9,
+    "image": "/frames/han3.png"
+  },
+  {
+    "id": "han4",
+    "name": "한글날5",
+    "enabled": false,
+    "sortOrder": 10,
+    "image": "/frames/han4.png"
+  },
+  {
+    "id": "han5",
+    "name": "한글날6",
+    "enabled": false,
+    "sortOrder": 11,
+    "image": "/frames/han5.png"
+  },
+  {
+    "id": "han6",
+    "name": "한글날7",
+    "enabled": false,
+    "sortOrder": 12,
+    "image": "/frames/han6.png"
+  },
+  {
+    "id": "han7",
+    "name": "한글날8",
+    "enabled": false,
+    "sortOrder": 13,
+    "image": "/frames/han7.png"
   }
 ]
