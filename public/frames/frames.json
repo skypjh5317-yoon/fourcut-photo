@@ -2,7 +2,7 @@
   {
     "id": "basic",
     "name": "기본",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 1,
     "image": "/frames/basic.png",
     "category": "basic",
@@ -12,7 +12,7 @@
   {
     "id": "pastel",
     "name": "파스텔",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 2,
     "image": "/frames/pastel.png",
     "category": "basic",
@@ -22,7 +22,7 @@
   {
     "id": "our-school",
     "name": "우리 학교",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 3,
     "image": "/frames/our-school.png",
     "category": "school",
@@ -33,7 +33,7 @@
   {
     "id": "nature",
     "name": "자연",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 4,
     "image": "/frames/nature.png",
     "category": "nature",
@@ -44,7 +44,7 @@
   {
     "id": "check",
     "name": "체크",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 5,
     "image": "/frames/check.png",
     "category": "basic",
@@ -54,56 +54,56 @@
   {
     "id": "han0",
     "name": "한글날1",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 6,
     "image": "/frames/han0.png"
   },
   {
     "id": "han1",
     "name": "한글날2",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 7,
     "image": "/frames/han1.png"
   },
   {
     "id": "han2",
     "name": "한글날3",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 8,
     "image": "/frames/han2.png"
   },
   {
     "id": "han3",
     "name": "한글날4",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 9,
     "image": "/frames/han3.png"
   },
   {
     "id": "han4",
     "name": "한글날5",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 10,
     "image": "/frames/han4.png"
   },
   {
     "id": "han5",
     "name": "한글날6",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 11,
     "image": "/frames/han5.png"
   },
   {
     "id": "han6",
     "name": "한글날7",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 12,
     "image": "/frames/han6.png"
   },
   {
     "id": "han7",
     "name": "한글날8",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 13,
     "image": "/frames/han7.png"
   }
