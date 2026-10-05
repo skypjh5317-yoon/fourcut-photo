@@ -56,55 +56,87 @@
     "name": "한글날1",
     "enabled": true,
     "sortOrder": 6,
-    "image": "/frames/han0.png"
+    "image": "/frames/han0.png",
+    "category": "hangul",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
   },
   {
     "id": "han1",
     "name": "한글날2",
     "enabled": true,
     "sortOrder": 7,
-    "image": "/frames/han1.png"
+    "image": "/frames/han1.png",
+    "category": "hangul",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
   },
   {
     "id": "han2",
     "name": "한글날3",
     "enabled": true,
     "sortOrder": 8,
-    "image": "/frames/han2.png"
+    "image": "/frames/han2.png",
+    "category": "hangul",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
   },
   {
     "id": "han3",
     "name": "한글날4",
     "enabled": true,
     "sortOrder": 9,
-    "image": "/frames/han3.png"
+    "image": "/frames/han3.png",
+    "category": "hangul",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
   },
   {
     "id": "han4",
     "name": "한글날5",
     "enabled": true,
     "sortOrder": 10,
-    "image": "/frames/han4.png"
+    "image": "/frames/han4.png",
+    "category": "hangul",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
   },
   {
     "id": "han5",
     "name": "한글날6",
     "enabled": true,
     "sortOrder": 11,
-    "image": "/frames/han5.png"
+    "image": "/frames/han5.png",
+    "category": "hangul",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
   },
   {
     "id": "han6",
     "name": "한글날7",
     "enabled": true,
     "sortOrder": 12,
-    "image": "/frames/han6.png"
+    "image": "/frames/han6.png",
+    "category": "hangul",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
   },
   {
     "id": "han7",
     "name": "한글날8",
     "enabled": true,
     "sortOrder": 13,
-    "image": "/frames/han7.png"
+    "image": "/frames/han7.png",
+    "category": "hangul",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
   }
 ]
