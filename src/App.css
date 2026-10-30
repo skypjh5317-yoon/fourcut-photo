@@ -54,14 +54,16 @@
   margin: 10px 0 0;
 }
 
-.light-back-button {
+/* 밝은 배경용 뒤로 버튼: 아래쪽 .back-button(흰 글씨)에 덮이지 않도록 두 클래스를 함께 지정 */
+.back-button.light-back-button {
   background: #fff;
   border-color: #e8d9bd;
   color: #2e4057;
   box-shadow: 0 3px 0 #eadfcf;
+  white-space: nowrap;
 }
 
-.light-back-button:hover {
+.back-button.light-back-button:hover {
   background: #fff5df;
 }
 
@@ -1319,6 +1321,7 @@
 
   .result-header,
   .result-actions,
+  .auto-home-note,
   .selected-thumbnails {
     display: none;
   }
@@ -1385,5 +1388,18 @@
   margin: 12px auto;
   max-width: 520px;
   padding: 12px 16px;
+  text-align: center;
+}
+
+/* 인쇄 후 자동으로 처음 화면으로 돌아간다는 안내 */
+.auto-home-note {
+  background: #eef8f5;
+  border: 2px solid #b9e2d8;
+  border-radius: 14px;
+  color: #1f6f61;
+  font-weight: 700;
+  margin: 4px auto 0;
+  max-width: 560px;
+  padding: 10px 16px;
   text-align: center;
 }

@@ -10,6 +10,8 @@ type CapturePhase = 'idle' | 'countdown' | 'flash' | 'preparing'
 type CameraFacing = 'user' | 'environment'
 
 const PHOTO_COUNT = 6
+// 인쇄 버튼을 누른 뒤 이 시간이 지나면 사진을 지우고 처음 화면으로 돌아간다 (다음 학생이 앞 사진을 보지 않도록)
+const AUTO_HOME_SECONDS = 120
 
 function App() {
   const [screen, setScreen] = useState<Screen>('welcome')
@@ -26,6 +28,8 @@ function App() {
   const [isComposing, setIsComposing] = useState(false)
   const [framePreview, setFramePreview] = useState('')
   const [cameraFacing, setCameraFacing] = useState<CameraFacing>('user')
+  const [isAutoHomeScheduled, setIsAutoHomeScheduled] = useState(false)
+  const autoHomeTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const capturedImagesRef = useRef<string[]>([])
@@ -42,6 +46,14 @@ function App() {
       window.clearTimeout(timerRef.current)
       timerRef.current = null
     }
+  }
+
+  const clearAutoHome = () => {
+    if (autoHomeTimerRef.current !== null) {
+      window.clearTimeout(autoHomeTimerRef.current)
+      autoHomeTimerRef.current = null
+    }
+    setIsAutoHomeScheduled(false)
   }
 
   const stopCamera = () => {
@@ -236,6 +248,7 @@ function App() {
   }
 
   const handleRetake = () => {
+    clearAutoHome()
     resetCaptureState()
     void startCamera()
   }
@@ -306,13 +319,25 @@ function App() {
     void startCamera(nextFacing, false)
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   const handleHome = () => {
+    clearAutoHome()
     resetCaptureState()
     setScreen('welcome')
+  }
+
+  const handlePrint = () => {
+    window.print()
+    clearAutoHome()
+    autoHomeTimerRef.current = window.setTimeout(() => {
+      autoHomeTimerRef.current = null
+      handleHome()
+    }, AUTO_HOME_SECONDS * 1000)
+    setIsAutoHomeScheduled(true)
+  }
+
+  const handleResultReselect = () => {
+    clearAutoHome()
+    setScreen('background')
   }
 
   const handleBack = () => {
@@ -347,6 +372,7 @@ function App() {
       requestIdRef.current += 1
       streamRef.current?.getTracks().forEach((track) => track.stop())
       streamRef.current = null
+      if (autoHomeTimerRef.current !== null) window.clearTimeout(autoHomeTimerRef.current)
     }
   }, [])
 
@@ -364,7 +390,7 @@ function App() {
             <img className="combined-image" src={finalImage} alt="완성된 4컷 사진" />
           </div>
           <div className="result-actions">
-            <button type="button" className="retake-button" onClick={() => setScreen('background')}>
+            <button type="button" className="retake-button" onClick={handleResultReselect}>
               ← 다시 선택
             </button>
             <button type="button" className="retake-button" onClick={handleRetake}>
@@ -377,6 +403,11 @@ function App() {
               ← 처음으로 돌아가기
             </button>
           </div>
+          {isAutoHomeScheduled && (
+            <p className="auto-home-note" role="status">
+              {`인쇄 후 ${AUTO_HOME_SECONDS / 60}분이 지나면 사진이 지워지고 처음 화면으로 돌아가요.`}
+            </p>
+          )}
           <div className="selected-thumbnails" aria-label="선택한 사진">
             {selectedPhotoIds.map((photoIndex, index) => (
               <img
@@ -624,7 +655,6 @@ function App() {
       <header className="welcome-header">
         <p className="eyebrow">SPECIAL MOMENTS</p>
         <h1>📸 우리 학교 4컷 사진관</h1>
-        <p className="subtitle">6장의 사진을 찍고, 마음에 드는 4장을 골라보세요!</p>
       </header>
 
       <section className="welcome-content" aria-labelledby="welcome-message">
