@@ -397,7 +397,8 @@ function App() {
         <header className="selection-header">
           <p className="eyebrow">CHOOSE YOUR FAVORITES</p>
           <h1>마음에 드는 사진 4장을 골라주세요</h1>
-          <p>{selectedPhotoIds.length} / 4장 선택</p>
+          {/* 학교망 보안 필터가 글자를 바꿔 끼워도 숫자가 갱신되도록 숫자가 바뀔 때마다 새로 그린다 */}
+          <p key={`selected-${selectedPhotoIds.length}`}>{`${selectedPhotoIds.length} / 4장 선택`}</p>
         </header>
         <section className="selection-workspace">
           <div className="selection-grid" aria-label="촬영한 사진 6장">
@@ -594,8 +595,13 @@ function App() {
               <div className="preparing-overlay">좋아요! 다음 사진을 준비하세요.</div>
             )}
           </div>
-          <p className="photo-progress" aria-live="polite">
-            {Math.min(capturedImages.length + 1, PHOTO_COUNT)} / {PHOTO_COUNT}
+          {/* 학교망 보안 필터가 글자를 바꿔 끼워도 숫자가 갱신되도록 숫자가 바뀔 때마다 새로 그린다 */}
+          <p
+            key={`progress-${capturedImages.length}`}
+            className="photo-progress"
+            aria-live="polite"
+          >
+            {`${Math.min(capturedImages.length + 1, PHOTO_COUNT)} / ${PHOTO_COUNT}`}
           </p>
           <p className="camera-instruction">
             사진을 찍을 준비가 되면 촬영 버튼을 눌러주세요.
