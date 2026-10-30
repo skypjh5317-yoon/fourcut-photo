@@ -240,6 +240,21 @@ export async function createFourCutImage(
 
   const loadedPhotos = await Promise.all(images.slice(0, 4).map((image) => loadImage(image)))
 
+  // 사진 4칸 전체를 하나의 흰 바탕으로 깔아서
+  // 사진 사이 틈으로 프레임 그림이 가는 선처럼 비치지 않게 한다.
+  context.save()
+  context.beginPath()
+  context.roundRect(
+    PHOTO_X_POSITIONS[0] - 8,
+    PHOTO_Y_POSITIONS[0] - 8,
+    PHOTO_WIDTH * 2 + PHOTO_GAP + 16,
+    PHOTO_HEIGHT * 2 + PHOTO_GAP + 16,
+    21,
+  )
+  context.fillStyle = '#ffffff'
+  context.fill()
+  context.restore()
+
   // --------------------------------------------------
   // 4. 사진 4장 배치
   // --------------------------------------------------
