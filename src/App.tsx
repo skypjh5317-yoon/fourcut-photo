@@ -137,6 +137,12 @@ function App() {
       return null
     }
 
+    // 전면 카메라는 화면에 거울처럼 보이므로, 저장되는 사진도 화면과 같은 방향으로 맞춘다.
+    if (cameraFacing === 'user') {
+      context.translate(captureSize, 0)
+      context.scale(-1, 1)
+    }
+
     context.drawImage(
       video,
       sourceX,
@@ -249,6 +255,7 @@ function App() {
 
     try {
       setIsComposing(true)
+      setCameraError('')
       const selectedImages = selectedPhotoIds.map((index) => capturedImages[index])
       const image = await createFourCutImage(selectedImages, selectedFrame)
       setFinalImage(image)
@@ -265,6 +272,7 @@ function App() {
     if (selectedPhotoIds.length !== 4 || !selectedFrame) return
     try {
       setIsComposing(true)
+      setCameraError('')
       const selectedImages = selectedPhotoIds.map((index) => capturedImages[index])
       const image = await createFourCutImage(selectedImages, selectedFrame)
       setFramePreview(image)
@@ -280,6 +288,7 @@ function App() {
     setSelectedFrame(frame)
     try {
       setIsComposing(true)
+      setCameraError('')
       const selectedImages = selectedPhotoIds.map((index) => capturedImages[index])
       const image = await createFourCutImage(selectedImages, frame)
       setFramePreview(image)
@@ -429,6 +438,9 @@ function App() {
             ))}
           </div>
         </section>
+        {cameraError && (
+          <p className="screen-error" role="alert">{cameraError}</p>
+        )}
         <div className="selection-actions">
           <button
             type="button"
@@ -497,7 +509,16 @@ function App() {
                   className="background-preview"
                   style={{ backgroundColor: frame.background ?? '#fff4dc' }}
                 >
-                  <span className="background-placeholder" aria-hidden="true">✦</span>
+                  {frame.thumbnail || frame.image ? (
+                    <img
+                      className="frame-thumbnail"
+                      src={frame.thumbnail ?? frame.image}
+                      alt=""
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className="background-placeholder" aria-hidden="true">✦</span>
+                  )}
                 </span>
                 <span className="background-name">
                   {selectedFrame?.id === frame.id && <span aria-hidden="true">✓ </span>}
@@ -506,6 +527,9 @@ function App() {
               </button>
             ))}
           </div>
+          {cameraError && (
+            <p className="screen-error" role="alert">{cameraError}</p>
+          )}
           <p className="selected-background" aria-live="polite">
             {selectedFrame ? `✓ ${selectedFrame.name}` : '프레임을 선택해주세요.'}
           </p>

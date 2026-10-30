@@ -9,6 +9,7 @@ interface FrameRecord {
 interface AdminRequest {
   method?: string
   body?: unknown
+  headers?: Record<string, string | string[] | undefined>
 }
 
 interface AdminResponse {
@@ -53,6 +54,25 @@ const readFrames = async (repository: string, token: string, branch: string) => 
 export default async function handler(request: AdminRequest, response: AdminResponse) {
   if (request.method !== 'PUT') {
     response.status(405).json({ error: 'Method Not Allowed' })
+    return
+  }
+
+  // 관리자 비밀번호 확인 (Vercel 환경변수 ADMIN_PASSWORD)
+  const adminPassword = process.env.ADMIN_PASSWORD
+  if (!adminPassword) {
+    response.status(500).json({ error: '관리자 비밀번호(ADMIN_PASSWORD)가 설정되지 않았어요.' })
+    return
+  }
+  const sentPassword = request.headers?.['x-admin-password']
+  const password = Array.isArray(sentPassword) ? sentPassword[0] : sentPassword
+  let decodedPassword = ''
+  try {
+    decodedPassword = password ? decodeURIComponent(password) : ''
+  } catch {
+    decodedPassword = ''
+  }
+  if (!decodedPassword || decodedPassword !== adminPassword) {
+    response.status(401).json({ error: '비밀번호가 맞지 않아요.' })
     return
   }
 
