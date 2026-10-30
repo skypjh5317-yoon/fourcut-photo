@@ -186,15 +186,7 @@ export async function createFourCutImage(
       CANVAS_WIDTH,
       CANVAS_HEIGHT,
     )
-
-    // 배경을 조금 부드럽게
-    context.fillStyle = 'rgba(255, 255, 255, 0.18)'
-    context.fillRect(
-      0,
-      0,
-      CANVAS_WIDTH,
-      CANVAS_HEIGHT,
-    )
+    // 직접 디자인한 프레임 색이 그대로 인쇄되도록 흰색 덮개는 씌우지 않는다.
   } else {
     // 배경 이미지가 없을 경우 선택한 색상 사용
     context.fillStyle = frame.background?.startsWith('#')

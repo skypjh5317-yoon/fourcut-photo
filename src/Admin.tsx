@@ -14,6 +14,7 @@ function Admin() {
   const [isSaving, setIsSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [password, setPassword] = useState('')
 
   useEffect(() => {
     void loadFrames()
@@ -47,21 +48,32 @@ function Admin() {
   )
 
   const saveFrames = async () => {
+    if (!password) {
+      setMessage('')
+      setError('관리자 비밀번호를 입력해주세요.')
+      return
+    }
     setIsSaving(true)
     setMessage('')
     setError('')
     try {
       const response = await fetch('/api/admin/frames', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': encodeURIComponent(password),
+        },
         body: JSON.stringify(changedFrames),
       })
-      if (!response.ok) throw new Error('저장에 실패했습니다.')
+      if (!response.ok) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null
+        throw new Error(body?.error ?? '저장에 실패했습니다.')
+      }
       const savedFrames = (await response.json()) as PhotoFrame[]
       setFrames(savedFrames.sort((a, b) => a.sortOrder - b.sortOrder))
       setMessage('저장되었습니다.')
-    } catch {
-      setError('저장에 실패했습니다.')
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : '저장에 실패했습니다.')
     } finally {
       setIsSaving(false)
     }
@@ -75,9 +87,23 @@ function Admin() {
           <h1>📷 4컷 사진 관리자</h1>
           <p>프레임 이름, 공개 여부, 표시 순서를 관리합니다.</p>
         </div>
-        <button type="button" className="admin-save-button" onClick={() => void saveFrames()} disabled={isSaving || isLoading}>
-          {isSaving ? '저장 중...' : '저장'}
-        </button>
+        <div className="admin-save-area">
+          <input
+            type="password"
+            className="admin-password-input"
+            placeholder="관리자 비밀번호"
+            aria-label="관리자 비밀번호"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !isSaving && !isLoading) void saveFrames()
+            }}
+          />
+          <button type="button" className="admin-save-button" onClick={() => void saveFrames()} disabled={isSaving || isLoading}>
+            {isSaving ? '저장 중...' : '저장'}
+          </button>
+        </div>
       </header>
 
       {message && <p className="admin-status success" role="status">✅ {message}</p>}

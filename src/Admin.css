@@ -50,6 +50,27 @@
   padding: 14px 24px;
 }
 
+.admin-save-area {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.admin-password-input {
+  border: 2px solid #eadfcf;
+  border-radius: 12px;
+  font: inherit;
+  min-width: 180px;
+  padding: 12px 14px;
+}
+
+.admin-password-input:focus {
+  border-color: #d36b4b;
+  outline: none;
+}
+
 .admin-save-button:disabled,
 .admin-order button:disabled {
   cursor: not-allowed;
