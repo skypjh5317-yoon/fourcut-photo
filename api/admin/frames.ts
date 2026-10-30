@@ -26,6 +26,29 @@ const getConfig = () => {
   return { repository, token, branch: process.env.GITHUB_BRANCH ?? 'main' }
 }
 
+class GitHubError extends Error {
+  status: number
+  constructor(status: number) {
+    super(`GitHub API 오류: ${status}`)
+    this.status = status
+  }
+}
+
+// 저장 실패 원인을 선생님이 알아볼 수 있는 말로 바꿔준다.
+const explainError = (error: unknown) => {
+  if (error instanceof GitHubError) {
+    if (error.status === 401) return 'GitHub 토큰(GITHUB_TOKEN)이 만료되었거나 잘못되었어요. 새 토큰을 만들어 Vercel에 넣어주세요.'
+    if (error.status === 403) return 'GitHub 토큰에 저장소 쓰기 권한(Contents: Read and write)이 없어요.'
+    if (error.status === 404) return 'GITHUB_REPOSITORY 값이 틀렸거나, 토큰이 이 저장소에 접근할 수 없어요.'
+    if (error.status === 409 || error.status === 422) return '다른 저장과 겹쳤어요. 새로고침한 뒤 다시 저장해주세요.'
+    return `GitHub 저장 중 오류가 났어요. (코드 ${error.status})`
+  }
+  if (error instanceof Error && error.message.includes('환경변수')) {
+    return 'Vercel에 GITHUB_TOKEN 또는 GITHUB_REPOSITORY 환경변수가 없어요.'
+  }
+  return '저장에 실패했습니다.'
+}
+
 const githubRequest = async (path: string, options: RequestInit, token: string) => {
   const response = await fetch(`https://api.github.com/repos/${path}`, {
     ...options,
@@ -36,7 +59,7 @@ const githubRequest = async (path: string, options: RequestInit, token: string) 
       ...options.headers,
     },
   })
-  if (!response.ok) throw new Error(`GitHub API 오류: ${response.status}`)
+  if (!response.ok) throw new GitHubError(response.status)
   return response
 }
 
@@ -107,7 +130,8 @@ export default async function handler(request: AdminRequest, response: AdminResp
     )
     response.status(200).json(savedFrames)
     void commitResponse
-  } catch {
-    response.status(500).json({ error: '저장에 실패했습니다.' })
+  } catch (error) {
+    console.error('[admin/frames] 저장 실패:', error)
+    response.status(500).json({ error: explainError(error) })
   }
 }
