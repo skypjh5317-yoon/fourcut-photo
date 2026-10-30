@@ -2,7 +2,7 @@
   {
     "id": "basic",
     "name": "기본",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 1,
     "image": "/frames/basic.png",
     "category": "basic",
@@ -12,7 +12,7 @@
   {
     "id": "pastel",
     "name": "파스텔",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 2,
     "image": "/frames/pastel.png",
     "category": "basic",
@@ -22,7 +22,7 @@
   {
     "id": "our-school",
     "name": "우리 학교",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 3,
     "image": "/frames/our-school.png",
     "category": "school",
@@ -33,7 +33,7 @@
   {
     "id": "nature",
     "name": "자연",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 4,
     "image": "/frames/nature.png",
     "category": "nature",
@@ -44,7 +44,7 @@
   {
     "id": "check",
     "name": "체크",
-    "enabled": false,
+    "enabled": true,
     "sortOrder": 5,
     "image": "/frames/check.png",
     "category": "basic",
@@ -54,7 +54,7 @@
   {
     "id": "han0",
     "name": "한글날1",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 6,
     "image": "/frames/han0.png",
     "category": "hangul",
@@ -65,7 +65,7 @@
   {
     "id": "han1",
     "name": "한글날2",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 7,
     "image": "/frames/han1.png",
     "category": "hangul",
@@ -76,7 +76,7 @@
   {
     "id": "han2",
     "name": "한글날3",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 8,
     "image": "/frames/han2.png",
     "category": "hangul",
@@ -87,7 +87,7 @@
   {
     "id": "han3",
     "name": "한글날4",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 9,
     "image": "/frames/han3.png",
     "category": "hangul",
@@ -98,7 +98,7 @@
   {
     "id": "han4",
     "name": "한글날5",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 10,
     "image": "/frames/han4.png",
     "category": "hangul",
@@ -109,7 +109,7 @@
   {
     "id": "han5",
     "name": "한글날6",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 11,
     "image": "/frames/han5.png",
     "category": "hangul",
@@ -120,7 +120,7 @@
   {
     "id": "han6",
     "name": "한글날7",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 12,
     "image": "/frames/han6.png",
     "category": "hangul",
@@ -131,7 +131,7 @@
   {
     "id": "han7",
     "name": "한글날8",
-    "enabled": true,
+    "enabled": false,
     "sortOrder": 13,
     "image": "/frames/han7.png",
     "category": "hangul",
