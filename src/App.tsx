@@ -388,45 +388,39 @@ function App() {
 
   if (screen === 'result') {
     return (
-      <main className="result-screen">
-        <header className="result-header">
-          <p className="eyebrow">SPECIAL MOMENTS</p>
-          <h1>사진 완성!</h1>
-          <p>마음에 드는 4장의 사진을 골랐어요.</p>
+      <main className="result-screen shelf">
+        <header className="result-header shelf-head">
+          <h1 className="shelf-title">사진 완성!</h1>
+          <p className="shelf-hint">인쇄하기를 누르면 엽서 크기(10×15cm)로 인쇄돼요.</p>
         </header>
 
-        <section className="result-content">
-          <div className="print-page">
+        <section className="result-content shelf-result">
+          <div className="print-page shelf-paper">
             <img className="combined-image" src={finalImage} alt="완성된 4컷 사진" />
           </div>
-          <div className="result-actions">
-            <button type="button" className="retake-button" onClick={handleResultReselect}>
-              ← 다시 선택
+
+          <div className="result-actions shelf-actions">
+            <button type="button" className="print-button shelf-print" onClick={handlePrint}>
+              인쇄하기
             </button>
-            <button type="button" className="retake-button" onClick={handleRetake}>
-              📸 다시 촬영
-            </button>
-            <button type="button" className="print-button" onClick={handlePrint}>
-              🖨️ 인쇄하기
-            </button>
-            <button type="button" className="home-button" onClick={handleHome}>
-              ← 처음으로 돌아가기
-            </button>
+            <div className="shelf-secondary">
+              <button type="button" className="retake-button shelf-ghost" onClick={handleResultReselect}>
+                프레임 다시 고르기
+              </button>
+              <button type="button" className="retake-button shelf-ghost" onClick={handleRetake}>
+                다시 찍기
+              </button>
+              <button type="button" className="home-button shelf-ghost" onClick={handleHome}>
+                처음으로
+              </button>
+            </div>
           </div>
+
           {isAutoHomeScheduled && (
-            <p className="auto-home-note" role="status">
+            <p className="auto-home-note shelf-note" role="status">
               {`인쇄 후 ${AUTO_HOME_SECONDS / 60}분이 지나면 사진이 지워지고 처음 화면으로 돌아가요.`}
             </p>
           )}
-          <div className="selected-thumbnails" aria-label="선택한 사진">
-            {selectedPhotoIds.map((photoIndex, index) => (
-              <img
-                key={`${capturedImages[photoIndex]}-${index}`}
-                src={capturedImages[photoIndex]}
-                alt={`선택한 사진 ${index + 1}`}
-              />
-            ))}
-          </div>
         </section>
       </main>
     )
@@ -434,66 +428,82 @@ function App() {
 
   if (screen === 'selection') {
     return (
-      <main className="selection-screen">
-        <header className="selection-header">
-          <p className="eyebrow">CHOOSE YOUR FAVORITES</p>
-          <h1>마음에 드는 사진 4장을 골라주세요</h1>
-          {/* 학교망 보안 필터가 글자를 바꿔 끼워도 숫자가 갱신되도록 숫자가 바뀔 때마다 새로 그린다 */}
-          <p key={`selected-${selectedPhotoIds.length}`}>{`${selectedPhotoIds.length} / 4장 선택`}</p>
+      <main className="selection-screen shelf">
+        <header className="shelf-head">
+          <button type="button" className="shelf-back" onClick={handleRetake}>
+            ← 다시 찍기
+          </button>
+          <h1 className="shelf-title">사진 4장 고르기</h1>
+          <p className="shelf-hint">고른 순서대로 인쇄 칸에 들어가요. 한 번 더 누르면 빠져요.</p>
         </header>
-        <section className="selection-workspace">
-          <div className="selection-grid" aria-label="촬영한 사진 6장">
-          {capturedImages.map((image, index) => (
-            <button
-              type="button"
-              className={`selection-card ${selectedPhotoIds.includes(index) ? 'selected' : ''}`}
-              key={`${image}-${index}`}
-              onClick={() => handlePhotoToggle(index)}
-            >
-              <img
-                src={image}
-                alt={`촬영한 사진 ${index + 1}`}
-                style={{ aspectRatio: PHOTO_SLOT_ASPECT_RATIO }}
-              />
-              <span className="photo-number">{index + 1}</span>
-              {selectedPhotoIds.includes(index) && (
-                <span className="selection-order">
-                  {selectedPhotoIds.indexOf(index) + 1}
-                </span>
-              )}
-            </button>
-          ))}
+
+        <section className="shelf-select">
+          <div className="selection-grid shelf-photos" aria-label="촬영한 사진 6장">
+            {capturedImages.map((image, index) => {
+              const order = selectedPhotoIds.indexOf(index)
+              const isSelected = order !== -1
+              return (
+                <button
+                  type="button"
+                  className={`selection-card shelf-photo ${isSelected ? 'selected' : ''}`}
+                  key={`${image}-${index}`}
+                  aria-pressed={isSelected}
+                  aria-label={isSelected ? `사진 ${index + 1}, ${order + 1}번째로 고름` : `사진 ${index + 1}`}
+                  onClick={() => handlePhotoToggle(index)}
+                >
+                  <img
+                    src={image}
+                    alt=""
+                    style={{ aspectRatio: PHOTO_SLOT_ASPECT_RATIO }}
+                  />
+                  {isSelected && (
+                    // 학교망 필터 대비: 순서가 바뀔 때마다 새로 그린다
+                    <span className="shelf-order" key={`order-${order}`} aria-hidden="true">
+                      {order + 1}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
-          <div className="four-preview" aria-label="선택한 사진 2x2 미리보기">
-            {selectedPhotoIds.map((photoIndex, order) => (
-              <img
-                key={`${capturedImages[photoIndex]}-${order}`}
-                src={capturedImages[photoIndex]}
-                alt={`선택한 사진 ${order + 1}`}
-                style={{ aspectRatio: PHOTO_SLOT_ASPECT_RATIO }}
-              />
-            ))}
-            {Array.from({ length: 4 - selectedPhotoIds.length }).map((_, index) => (
-              <div className="four-preview-empty" key={`empty-${index}`}>
-                {selectedPhotoIds.length + index + 1}
-              </div>
-            ))}
-          </div>
+
+          <aside className="shelf-card-wrap" aria-label="고른 사진 인쇄 칸 미리보기">
+            <div className="shelf-card">
+              {Array.from({ length: 4 }).map((_, slot) => {
+                const photoIndex = selectedPhotoIds[slot]
+                return photoIndex === undefined ? (
+                  <div className="shelf-slot empty" key={`empty-${slot}`}>
+                    {slot + 1}
+                  </div>
+                ) : (
+                  <img
+                    className="shelf-slot"
+                    key={`${capturedImages[photoIndex]}-${slot}`}
+                    src={capturedImages[photoIndex]}
+                    alt={`인쇄 칸 ${slot + 1}`}
+                  />
+                )
+              })}
+            </div>
+            {/* 학교망 보안 필터가 글자를 바꿔 끼워도 숫자가 갱신되도록 숫자가 바뀔 때마다 새로 그린다 */}
+            <p className="shelf-count" key={`selected-${selectedPhotoIds.length}`} aria-live="polite">
+              {`${selectedPhotoIds.length} / 4장 선택`}
+            </p>
+          </aside>
         </section>
+
         {cameraError && (
           <p className="screen-error" role="alert">{cameraError}</p>
         )}
-        <div className="selection-actions">
+
+        <div className="shelf-bar">
           <button
             type="button"
-            className="background-start-button"
+            className="shelf-next"
             disabled={selectedPhotoIds.length !== 4}
             onClick={() => void handleOpenBackground()}
           >
-            다음: 배경 프레임 선택
-          </button>
-          <button type="button" className="retake-button" onClick={handleRetake}>
-            🔄 다시 촬영
+            다음: 프레임 고르기
           </button>
         </div>
       </main>
