@@ -39,6 +39,14 @@ const PHOTO_Y_POSITIONS = [PHOTO_START_Y, PHOTO_START_Y + PHOTO_HEIGHT + PHOTO_G
 
 export const PHOTO_SLOT_ASPECT_RATIO = '1 / 1'
 
+/**
+ * 사진 4칸의 위치 (캔버스 기준 px). 관리자 페이지에서 새 프레임을 올릴 때
+ * 사진이 들어갈 자리를 보여주는 데 쓴다. 합성 계산에는 영향을 주지 않는다.
+ */
+export const PHOTO_SLOTS = PHOTO_Y_POSITIONS.flatMap((y) =>
+  PHOTO_X_POSITIONS.map((x) => ({ x, y, width: PHOTO_WIDTH, height: PHOTO_HEIGHT })),
+)
+
 function loadImage(source?: string): Promise<HTMLImageElement | null> {
   if (!source || source.startsWith('#')) return Promise.resolve(null)
   return new Promise((resolve) => {

@@ -74,8 +74,111 @@ const readFrames = async (repository: string, token: string, branch: string) => 
   return { frames: JSON.parse(json) as FrameRecord[], sha: content.sha }
 }
 
+// ---------------------------------------------------------------
+// 새 프레임 추가 (POST)
+// 그림 파일과 frames.json 수정을 커밋 한 번으로 저장해서 배포도 한 번만 일어나게 한다.
+// ---------------------------------------------------------------
+
+interface NewFrameRequest {
+  name?: unknown
+  image?: unknown
+  enabled?: unknown
+}
+
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024
+const MAX_NAME_LENGTH = 30
+
+const parseNewFrame = (body: unknown) => {
+  const { name, image, enabled } = (body ?? {}) as NewFrameRequest
+  const trimmedName = typeof name === 'string' ? name.trim() : ''
+  if (!trimmedName) return { error: '프레임 이름을 입력해주세요.' }
+  if (trimmedName.length > MAX_NAME_LENGTH) return { error: `프레임 이름은 ${MAX_NAME_LENGTH}자 이하로 써주세요.` }
+  const match = typeof image === 'string' ? image.match(/^data:image\/(jpeg|png);base64,([A-Za-z0-9+/=]+)$/) : null
+  if (!match) return { error: '프레임 그림은 JPG 또는 PNG 파일이어야 해요.' }
+  const bytes = Buffer.from(match[2], 'base64')
+  if (bytes.length === 0) return { error: '프레임 그림을 읽지 못했어요.' }
+  if (bytes.length > MAX_IMAGE_BYTES) return { error: '프레임 그림이 너무 커요. (3MB 이하)' }
+  return {
+    name: trimmedName,
+    extension: match[1] === 'png' ? 'png' : 'jpg',
+    base64: match[2],
+    enabled: enabled !== false,
+  }
+}
+
+const gitJson = async <T,>(path: string, token: string, method = 'GET', body?: unknown) => {
+  const response = await githubRequest(
+    path,
+    body === undefined
+      ? { method }
+      : { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+    token,
+  )
+  return (await response.json()) as T
+}
+
+const addFrame = async (body: unknown, response: AdminResponse) => {
+  const parsed = parseNewFrame(body)
+  if ('error' in parsed) {
+    response.status(400).json({ error: parsed.error })
+    return
+  }
+
+  const { repository, token, branch } = getConfig()
+
+  // 1. 지금 브랜치의 최신 커밋과 frames.json
+  const ref = await gitJson<{ object: { sha: string } }>(
+    `${repository}/git/ref/heads/${encodeURIComponent(branch)}`,
+    token,
+  )
+  const headSha = ref.object.sha
+  const headCommit = await gitJson<{ tree: { sha: string } }>(`${repository}/git/commits/${headSha}`, token)
+  const { frames } = await readFrames(repository, token, headSha)
+
+  // 2. 새 프레임 정보 (id는 겹치지 않게 시간으로 만든다)
+  let id = `frame-${Date.now().toString(36)}`
+  while (frames.some((frame) => frame.id === id)) id = `${id}x`
+  const imagePath = `/frames/${id}.${parsed.extension}`
+  const maxOrder = frames.reduce((max, frame) => Math.max(max, Number(frame.sortOrder) || 0), 0)
+  const newFrame: FrameRecord = {
+    id,
+    name: parsed.name,
+    enabled: parsed.enabled,
+    sortOrder: maxOrder + 1,
+    image: imagePath,
+    category: 'custom',
+    title: '',
+    subtitle: '',
+    footerText: '',
+  }
+  const savedFrames = [...frames, newFrame].sort((a, b) => a.sortOrder - b.sortOrder)
+
+  // 3. 그림 + frames.json을 한 커밋으로
+  const blob = await gitJson<{ sha: string }>(`${repository}/git/blobs`, token, 'POST', {
+    content: parsed.base64,
+    encoding: 'base64',
+  })
+  const tree = await gitJson<{ sha: string }>(`${repository}/git/trees`, token, 'POST', {
+    base_tree: headCommit.tree.sha,
+    tree: [
+      { path: `public${imagePath}`, mode: '100644', type: 'blob', sha: blob.sha },
+      { path: filePath, mode: '100644', type: 'blob', content: `${JSON.stringify(savedFrames, null, 2)}\n` },
+    ],
+  })
+  const commit = await gitJson<{ sha: string }>(`${repository}/git/commits`, token, 'POST', {
+    message: `Add frame: ${parsed.name}`,
+    tree: tree.sha,
+    parents: [headSha],
+  })
+  await gitJson(`${repository}/git/refs/heads/${encodeURIComponent(branch)}`, token, 'PATCH', {
+    sha: commit.sha,
+  })
+
+  response.status(200).json({ frame: newFrame, frames: savedFrames })
+}
+
 export default async function handler(request: AdminRequest, response: AdminResponse) {
-  if (request.method !== 'PUT') {
+  if (request.method !== 'PUT' && request.method !== 'POST') {
     response.status(405).json({ error: 'Method Not Allowed' })
     return
   }
@@ -96,6 +199,16 @@ export default async function handler(request: AdminRequest, response: AdminResp
   }
   if (!decodedPassword || decodedPassword !== adminPassword) {
     response.status(401).json({ error: '비밀번호가 맞지 않아요.' })
+    return
+  }
+
+  if (request.method === 'POST') {
+    try {
+      await addFrame(request.body, response)
+    } catch (error) {
+      console.error('[admin/frames] 프레임 추가 실패:', error)
+      response.status(500).json({ error: explainError(error) })
+    }
     return
   }
 
