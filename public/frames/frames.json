@@ -138,5 +138,16 @@
     "title": "",
     "subtitle": "",
     "footerText": ""
+  },
+  {
+    "id": "frame-mvwft0ld",
+    "name": "가을",
+    "enabled": true,
+    "sortOrder": 14,
+    "image": "/frames/frame-mvwft0ld.jpg",
+    "category": "custom",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
   }
 ]
