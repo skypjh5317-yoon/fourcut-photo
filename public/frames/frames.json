@@ -63,17 +63,6 @@
     "footerText": ""
   },
   {
-    "id": "han7",
-    "name": "한글날8",
-    "enabled": true,
-    "sortOrder": 13,
-    "image": "/frames/han7.png",
-    "category": "hangul",
-    "title": "",
-    "subtitle": "",
-    "footerText": ""
-  },
-  {
     "id": "frame-mvwft0ld",
     "name": "가을",
     "enabled": true,
