@@ -97,6 +97,9 @@ function Admin() {
   const [addMessage, setAddMessage] = useState('')
   const [addError, setAddError] = useState('')
   const [fileInputKey, setFileInputKey] = useState(0)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState('')
 
   useEffect(() => {
     void loadFrames()
@@ -128,6 +131,38 @@ function Admin() {
     () => frames.map(({ id, name, enabled, sortOrder }) => ({ id, name, enabled, sortOrder })),
     [frames],
   )
+
+  const deleteFrame = async (frame: PhotoFrame) => {
+    setMessage('')
+    setError('')
+    setDeleteError('')
+    if (!password) {
+      setDeleteError('위쪽 칸에 관리자 비밀번호를 먼저 입력해주세요.')
+      return
+    }
+    setDeletingId(frame.id)
+    try {
+      const response = await fetch(`/api/admin/frames?id=${encodeURIComponent(frame.id)}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': encodeURIComponent(password),
+        },
+        body: JSON.stringify({ id: frame.id }),
+      })
+      const body = (await response.json().catch(() => null)) as { error?: string } | null
+      if (!response.ok) throw new Error(body?.error ?? '프레임을 지우지 못했어요.')
+      // 다른 프레임에서 아직 저장하지 않은 변경은 그대로 두고, 지운 프레임만 목록에서 뺀다.
+      setFrames((current) => current.filter((item) => item.id !== frame.id))
+      setMessage(`"${frame.name}" 프레임을 지웠어요. 1~2분 뒤 촬영 화면에서도 사라져요.`)
+      setConfirmDeleteId(null)
+    } catch (failure) {
+      // 실패하면 확인 칸을 열어 둔 채 그 안에 이유를 보여준다.
+      setDeleteError(failure instanceof Error ? failure.message : '프레임을 지우지 못했어요.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const saveFrames = async () => {
     if (!password) {
@@ -375,6 +410,53 @@ function Admin() {
                   <button type="button" aria-label={`${frame.name} 아래로 이동`} onClick={() => moveFrame(index, 1)} disabled={index === frames.length - 1}>▼</button>
                 </div>
               </div>
+              {confirmDeleteId === frame.id ? (
+                <div className="admin-delete-confirm" role="group" aria-label={`${frame.name} 삭제 확인`}>
+                  <p>
+                    {frames.filter((item) => item.enabled && item.id !== frame.id).length === 0
+                      ? '이 프레임을 지우면 촬영 화면에서 고를 프레임이 하나도 없어요. 그래도 지울까요?'
+                      : '정말 지울까요? 그림 파일까지 지워져서 되돌릴 수 없어요.'}
+                  </p>
+                  {deleteError && (
+                    <p className="admin-delete-error" role="alert" key={deleteError}>❌ {deleteError}</p>
+                  )}
+                  <div>
+                    <button
+                      type="button"
+                      className="admin-delete-yes"
+                      disabled={deletingId !== null}
+                      onClick={() => void deleteFrame(frame)}
+                    >
+                      <span key={deletingId === frame.id ? 'busy' : 'ready'}>
+                        {deletingId === frame.id ? '지우는 중...' : '지우기'}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-delete-no"
+                      disabled={deletingId !== null}
+                      onClick={() => {
+                        setConfirmDeleteId(null)
+                        setDeleteError('')
+                      }}
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="admin-delete-button"
+                  disabled={deletingId !== null}
+                  onClick={() => {
+                    setConfirmDeleteId(frame.id)
+                    setDeleteError('')
+                  }}
+                >
+                  프레임 삭제
+                </button>
+              )}
             </article>
           ))}
         </section>

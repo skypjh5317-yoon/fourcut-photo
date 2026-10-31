@@ -10,6 +10,7 @@ interface AdminRequest {
   method?: string
   body?: unknown
   headers?: Record<string, string | string[] | undefined>
+  query?: Record<string, string | string[] | undefined>
 }
 
 interface AdminResponse {
@@ -177,8 +178,74 @@ const addFrame = async (body: unknown, response: AdminResponse) => {
   response.status(200).json({ frame: newFrame, frames: savedFrames })
 }
 
+// ---------------------------------------------------------------
+// 프레임 삭제 (DELETE)
+// frames.json에서 빼고, 다른 프레임이 같은 그림을 쓰지 않으면 그림 파일도 지운다. (커밋 한 번)
+// ---------------------------------------------------------------
+
+const deleteFrame = async (request: AdminRequest, response: AdminResponse) => {
+  // 주소(?id=)와 본문 둘 다 받는다. (중간 네트워크가 DELETE 본문을 지우는 경우 대비)
+  const queryId = request.query?.id
+  const bodyId = ((request.body ?? {}) as { id?: unknown }).id
+  const id = (Array.isArray(queryId) ? queryId[0] : queryId) ?? bodyId
+  if (typeof id !== 'string' || !id) {
+    response.status(400).json({ error: '지울 프레임을 알 수 없어요.' })
+    return
+  }
+
+  const { repository, token, branch } = getConfig()
+  const ref = await gitJson<{ object: { sha: string } }>(
+    `${repository}/git/ref/heads/${encodeURIComponent(branch)}`,
+    token,
+  )
+  const headSha = ref.object.sha
+  const headCommit = await gitJson<{ tree: { sha: string } }>(`${repository}/git/commits/${headSha}`, token)
+  const { frames } = await readFrames(repository, token, headSha)
+
+  const target = frames.find((frame) => frame.id === id)
+  if (!target) {
+    response.status(404).json({ error: '이미 지워졌거나 없는 프레임이에요. 새로고침해 주세요.' })
+    return
+  }
+
+  const savedFrames = frames.filter((frame) => frame.id !== id)
+  const treeEntries: Array<Record<string, unknown>> = [
+    { path: filePath, mode: '100644', type: 'blob', content: `${JSON.stringify(savedFrames, null, 2)}\n` },
+  ]
+
+  // 그림 파일: public/frames/ 안의 파일이고, 다른 프레임이 쓰지 않을 때만 지운다.
+  const image = typeof target.image === 'string' ? target.image : ''
+  const isFrameImage = /^\/frames\/[A-Za-z0-9._-]+\.(png|jpe?g)$/i.test(image)
+  const usedByOthers = savedFrames.some((frame) => frame.image === image)
+  let removedImage = false
+  if (isFrameImage && !usedByOthers) {
+    try {
+      await githubRequest(`${repository}/contents/public${image}?ref=${headSha}`, {}, token)
+      treeEntries.push({ path: `public${image}`, mode: '100644', type: 'blob', sha: null })
+      removedImage = true
+    } catch (error) {
+      if (!(error instanceof GitHubError && error.status === 404)) throw error
+    }
+  }
+
+  const tree = await gitJson<{ sha: string }>(`${repository}/git/trees`, token, 'POST', {
+    base_tree: headCommit.tree.sha,
+    tree: treeEntries,
+  })
+  const commit = await gitJson<{ sha: string }>(`${repository}/git/commits`, token, 'POST', {
+    message: `Delete frame: ${target.name}`,
+    tree: tree.sha,
+    parents: [headSha],
+  })
+  await gitJson(`${repository}/git/refs/heads/${encodeURIComponent(branch)}`, token, 'PATCH', {
+    sha: commit.sha,
+  })
+
+  response.status(200).json({ id, removedImage, frames: savedFrames })
+}
+
 export default async function handler(request: AdminRequest, response: AdminResponse) {
-  if (request.method !== 'PUT' && request.method !== 'POST') {
+  if (request.method !== 'PUT' && request.method !== 'POST' && request.method !== 'DELETE') {
     response.status(405).json({ error: 'Method Not Allowed' })
     return
   }
@@ -199,6 +266,16 @@ export default async function handler(request: AdminRequest, response: AdminResp
   }
   if (!decodedPassword || decodedPassword !== adminPassword) {
     response.status(401).json({ error: '비밀번호가 맞지 않아요.' })
+    return
+  }
+
+  if (request.method === 'DELETE') {
+    try {
+      await deleteFrame(request, response)
+    } catch (error) {
+      console.error('[admin/frames] 프레임 삭제 실패:', error)
+      response.status(500).json({ error: explainError(error) })
+    }
     return
   }
 
