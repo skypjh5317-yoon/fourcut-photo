@@ -52,17 +52,6 @@
     "footerText": ""
   },
   {
-    "id": "han0",
-    "name": "한글날1",
-    "enabled": true,
-    "sortOrder": 6,
-    "image": "/frames/han0.png",
-    "category": "hangul",
-    "title": "",
-    "subtitle": "",
-    "footerText": ""
-  },
-  {
     "id": "han1",
     "name": "한글날2",
     "enabled": true,
