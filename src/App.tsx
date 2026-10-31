@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import './App.css'
+import './booth.css'
 import type { PhotoFrame } from './data/frames'
 import { PHOTO_SLOT_ASPECT_RATIO } from './utils/photoUtils'
 import { createFourCutImage } from './utils/photoUtils'
@@ -12,6 +14,14 @@ type CameraFacing = 'user' | 'environment'
 const PHOTO_COUNT = 6
 // 인쇄 버튼을 누른 뒤 이 시간이 지나면 사진을 지우고 처음 화면으로 돌아간다 (다음 학생이 앞 사진을 보지 않도록)
 const AUTO_HOME_SECONDS = 120
+
+// 첫 화면 사진 띠에 들어가는 포즈 예시
+const WELCOME_POSES = [
+  { emoji: '😄', label: '활짝 웃기' },
+  { emoji: '✌️', label: '브이' },
+  { emoji: '😲', label: '깜짝 놀라기' },
+  { emoji: '🫶', label: '손 하트' },
+]
 
 function App() {
   const [screen, setScreen] = useState<Screen>('welcome')
@@ -492,88 +502,101 @@ function App() {
 
   if (screen === 'background') {
     return (
-      <main className="background-screen">
-        <header className="background-header">
+      <main className="background-screen picker">
+        <header className="picker-head">
           <button
             type="button"
-            className="back-button light-back-button"
+            className="picker-back"
             onClick={() => setScreen('selection')}
           >
-            ← 사진 다시 선택
+            ← 사진 다시 고르기
           </button>
-          <div>
-            <p className="eyebrow">SPECIAL MOMENTS</p>
-            <h1>🎨 배경 프레임을 선택해주세요</h1>
-            <p>4컷 사진에 어울리는 프레임을 골라보세요!</p>
-          </div>
-          <div className="header-spacer" aria-hidden="true" />
+          <h1 className="picker-title">프레임 고르기</h1>
+          <p className="picker-hint">프레임을 누르면 인쇄 미리보기가 바로 바뀌어요.</p>
         </header>
 
-        <section className="background-content">
-          <div className="frame-preview" aria-label="선택한 사진과 프레임 미리보기">
-            {framePreview ? (
-              <img src={framePreview} alt="선택한 사진과 프레임 최종 인쇄 미리보기" />
-            ) : (
-              selectedPhotoIds.map((photoIndex, order) => (
-                <img
-                  key={`${capturedImages[photoIndex]}-${order}`}
-                  src={capturedImages[photoIndex]}
-                  alt={`4컷 미리보기 ${order + 1}`}
-                />
-              ))
-            )}
-          </div>
-          <div className="background-grid" aria-label="사진 프레임 목록">
-            {framesError && <p className="camera-message camera-error">{framesError}</p>}
-            {!framesError && enabledFrames.length === 0 && (
-              <p className="camera-message">사용 가능한 프레임이 없습니다.</p>
-            )}
-            {enabledFrames.map((frame) => (
-              <button
-                type="button"
-                className={`background-card ${
-                  selectedFrame?.id === frame.id ? 'selected' : ''
-                }`}
-                key={frame.id}
-                onClick={() => void handleFrameSelect(frame)}
-              >
-                <span
-                  className="background-preview"
-                  style={{ backgroundColor: frame.background ?? '#fff4dc' }}
-                >
-                  {frame.thumbnail || frame.image ? (
+        <div className="picker-body">
+          <figure className="picker-print">
+            <div className="picker-paper" aria-label="선택한 사진과 프레임 미리보기">
+              {framePreview ? (
+                <img src={framePreview} alt="선택한 사진과 프레임 최종 인쇄 미리보기" />
+              ) : (
+                <div className="picker-paper-fallback">
+                  {selectedPhotoIds.map((photoIndex, order) => (
                     <img
-                      className="frame-thumbnail"
-                      src={frame.thumbnail ?? frame.image}
-                      alt=""
-                      loading="lazy"
+                      key={`${capturedImages[photoIndex]}-${order}`}
+                      src={capturedImages[photoIndex]}
+                      alt={`4컷 미리보기 ${order + 1}`}
                     />
-                  ) : (
-                    <span className="background-placeholder" aria-hidden="true">✦</span>
-                  )}
-                </span>
-                <span className="background-name">
-                  {selectedFrame?.id === frame.id && <span aria-hidden="true">✓ </span>}
-                  {frame.name}
-                </span>
-              </button>
-            ))}
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* 학교망 필터 대비: 이름이 바뀔 때마다 새로 그린다 */}
+            <figcaption key={selectedFrame?.id ?? 'none'} aria-live="polite">
+              {selectedFrame ? selectedFrame.name : '프레임을 골라 주세요'}
+            </figcaption>
+          </figure>
+
+          <div className="background-grid picker-grid" aria-label="사진 프레임 목록">
+            {framesError && <p className="picker-empty">{framesError}</p>}
+            {!framesError && enabledFrames.length === 0 && (
+              <p className="picker-empty">
+                쓸 수 있는 프레임이 없어요. 관리자 페이지에서 프레임을 &quot;사용&quot;으로 바꿔 주세요.
+              </p>
+            )}
+            {enabledFrames.map((frame) => {
+              const isSelected = selectedFrame?.id === frame.id
+              return (
+                <button
+                  type="button"
+                  className={`background-card picker-card ${isSelected ? 'selected' : ''}`}
+                  key={frame.id}
+                  aria-pressed={isSelected}
+                  onClick={() => void handleFrameSelect(frame)}
+                >
+                  <span className="picker-thumb">
+                    {frame.thumbnail || frame.image ? (
+                      <img
+                        className="frame-thumbnail"
+                        src={frame.thumbnail ?? frame.image}
+                        alt=""
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span
+                        className="picker-thumb-color"
+                        style={{ backgroundColor: frame.background ?? '#ffffff' }}
+                      />
+                    )}
+                    {isSelected && (
+                      <span className="picker-check" aria-hidden="true">✓</span>
+                    )}
+                  </span>
+                  <span className="picker-name">{frame.name}</span>
+                </button>
+              )
+            })}
           </div>
-          {cameraError && (
-            <p className="screen-error" role="alert">{cameraError}</p>
-          )}
-          <p className="selected-background" aria-live="polite">
-            {selectedFrame ? `✓ ${selectedFrame.name}` : '프레임을 선택해주세요.'}
-          </p>
+        </div>
+
+        {cameraError && (
+          <p className="screen-error" role="alert">{cameraError}</p>
+        )}
+
+        <div className="picker-bar">
           <button
             type="button"
-            className="background-start-button"
+            className="picker-done"
             disabled={isComposing || selectedPhotoIds.length !== 4 || !selectedFrame}
             onClick={() => void handleFrameContinue()}
           >
-            {isComposing ? '사진을 만드는 중...' : '🎉 이 프레임으로 완성하기'}
+            {/* 학교망 필터 대비: 글자가 바뀔 때마다 새로 그린다 */}
+            <span key={isComposing ? 'busy' : 'ready'}>
+              {isComposing ? '사진을 만드는 중…' : '이 프레임으로 완성하기'}
+            </span>
           </button>
-        </section>
+        </div>
       </main>
     )
   }
@@ -651,39 +674,42 @@ function App() {
   }
 
   return (
-    <main className="welcome-screen">
-      <header className="welcome-header">
-        <p className="eyebrow">SPECIAL MOMENTS</p>
-        <h1>📸 우리 학교 4컷 사진관</h1>
-      </header>
+    <main className="welcome-screen booth">
+      <section className="booth-copy" aria-labelledby="booth-title">
+        <h1 id="booth-title" className="booth-title">
+          <span className="booth-title-school">우리 학교</span>
+          <span className="booth-title-main">4컷</span>
+          <span className="booth-title-main">사진관</span>
+        </h1>
 
-      <section className="welcome-content" aria-labelledby="welcome-message">
-        <div className="camera-art" aria-hidden="true">
-          <span className="sparkle sparkle-one">✦</span>
-          <span className="sparkle sparkle-two">✦</span>
-          <div className="camera-shape">
-            <div className="camera-flash" />
-            <div className="camera-lens">
-              <div className="lens-glow" />
-            </div>
-          </div>
-          <div className="camera-shadow" />
-        </div>
+        <ol className="booth-steps" aria-label="사진 찍는 순서">
+          <li>사진 6장 찍기</li>
+          <li>마음에 드는 4장 고르기</li>
+          <li>프레임 골라 인쇄하기</li>
+        </ol>
 
-        <div className="welcome-copy">
-          <h2 id="welcome-message">6장의 사진을 찍고, 마음에 드는 4장을 골라보세요!</h2>
-          <p>친구들과 함께 웃고, 포즈를 취하며 추억을 만들어 보아요.</p>
-          <button type="button" className="start-button" onClick={() => void startCamera()}>
-            <span aria-hidden="true">📷</span>
-            사진 촬영하기
-          </button>
-        </div>
+        <button type="button" className="start-button booth-start" onClick={() => void startCamera()}>
+          사진 찍기 시작
+        </button>
+
+        <p className="booth-privacy">
+          사진은 이 태블릿 안에서만 만들어지고, 인쇄하고 2분이 지나면 지워져요.
+        </p>
       </section>
 
-      <footer className="privacy-note">
-        <span aria-hidden="true">🔒</span>
-        사진은 이 기기에만 임시로 저장되며 촬영과 인쇄가 끝나면 삭제됩니다.
-      </footer>
+      <div className="booth-strip" aria-hidden="true">
+        {WELCOME_POSES.map((pose, index) => (
+          <div
+            className="booth-shot"
+            key={pose.label}
+            style={{ '--shot': index } as CSSProperties}
+          >
+            <span className="booth-pose">{pose.emoji}</span>
+            <span className="booth-pose-label">{pose.label}</span>
+          </div>
+        ))}
+        <p className="booth-strip-foot">우리 학교 4컷</p>
+      </div>
     </main>
   )
 }
