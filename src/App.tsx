@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties } from 'react'
 import './App.css'
 import './booth.css'
+import DoodleLogo from './components/DoodleLogo'
 import type { PhotoFrame } from './data/frames'
 import { PHOTO_SLOT_ASPECT_RATIO } from './utils/photoUtils'
 import { createFourCutImage } from './utils/photoUtils'
@@ -15,13 +15,6 @@ const PHOTO_COUNT = 6
 // 인쇄 버튼을 누른 뒤 이 시간이 지나면 사진을 지우고 처음 화면으로 돌아간다 (다음 학생이 앞 사진을 보지 않도록)
 const AUTO_HOME_SECONDS = 120
 
-// 첫 화면 사진 띠에 들어가는 포즈 예시
-const WELCOME_POSES = [
-  { emoji: '😄', label: '활짝 웃기' },
-  { emoji: '✌️', label: '브이' },
-  { emoji: '😲', label: '깜짝 놀라기' },
-  { emoji: '🫶', label: '손 하트' },
-]
 
 function App() {
   const [screen, setScreen] = useState<Screen>('welcome')
@@ -618,14 +611,14 @@ function App() {
           <button type="button" className="back-button" onClick={handleBack}>
             ← 뒤로
           </button>
-          <h1>📸 사진 촬영</h1>
+          <h1>사진 찍기</h1>
           <button
             type="button"
             className="camera-switch-button"
             onClick={handleCameraToggle}
             disabled={cameraStatus === 'loading' || capturePhase !== 'idle'}
           >
-            ↻ {cameraFacing === 'user' ? '후면' : '전면'} 카메라
+            ↻ {cameraFacing === 'user' ? '뒤' : '앞'} 카메라로
           </button>
         </header>
 
@@ -651,33 +644,51 @@ function App() {
             <div className="square-capture-guide" aria-hidden="true" />
             {capturePhase === 'countdown' && countdown !== null && (
               <div className="countdown-overlay" aria-live="assertive">
-                {countdown}
+                <span className="countdown-bubble" key={`count-${countdown}`}>
+                  {countdown}
+                </span>
               </div>
             )}
             {capturePhase === 'flash' && <div className="flash-overlay">찰칵!</div>}
             {capturePhase === 'preparing' && (
-              <div className="preparing-overlay">좋아요! 다음 사진을 준비하세요.</div>
+              <div className="preparing-overlay">
+                <span>좋아요! 다음 포즈 준비~</span>
+              </div>
             )}
           </div>
-          {/* 학교망 보안 필터가 글자를 바꿔 끼워도 숫자가 갱신되도록 숫자가 바뀔 때마다 새로 그린다 */}
-          <p
-            key={`progress-${capturedImages.length}`}
-            className="photo-progress"
-            aria-live="polite"
-          >
-            {`${Math.min(capturedImages.length + 1, PHOTO_COUNT)} / ${PHOTO_COUNT}`}
-          </p>
-          <p className="camera-instruction">
-            사진을 찍을 준비가 되면 촬영 버튼을 눌러주세요.
-          </p>
-          <button
-            type="button"
-            className="capture-button"
-            onClick={handleCapture}
-            disabled={cameraStatus !== 'ready' || capturePhase !== 'idle'}
-          >
-            📷 촬영
-          </button>
+          <div className="camera-bottom">
+            <div className="photo-progress-wrap">
+              <div className="photo-dots" aria-hidden="true">
+                {Array.from({ length: PHOTO_COUNT }).map((_, index) => (
+                  <span
+                    key={`dot-${index}-${index < capturedImages.length ? 'on' : 'off'}`}
+                    className={`photo-dot ${index < capturedImages.length ? 'done' : ''} ${
+                      index === capturedImages.length ? 'now' : ''
+                    }`}
+                  />
+                ))}
+              </div>
+              {/* 학교망 보안 필터가 글자를 바꿔 끼워도 숫자가 갱신되도록 숫자가 바뀔 때마다 새로 그린다 */}
+              <p
+                key={`progress-${capturedImages.length}`}
+                className="photo-progress"
+                aria-live="polite"
+              >
+                {`${Math.min(capturedImages.length + 1, PHOTO_COUNT)} / ${PHOTO_COUNT}`}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="capture-button"
+              onClick={handleCapture}
+              disabled={cameraStatus !== 'ready' || capturePhase !== 'idle'}
+            >
+              촬영하기
+            </button>
+            <p className="camera-instruction">
+              버튼을 한 번 누르면 3초마다 6장을 찍어요.
+            </p>
+          </div>
         </section>
       </main>
     )
@@ -685,41 +696,26 @@ function App() {
 
   return (
     <main className="welcome-screen booth">
-      <section className="booth-copy" aria-labelledby="booth-title">
+      <section className="booth-hero" aria-labelledby="booth-title">
+        <DoodleLogo className="booth-logo" animated />
         <h1 id="booth-title" className="booth-title">
-          <span className="booth-title-school">우리 학교</span>
-          <span className="booth-title-main">4컷</span>
-          <span className="booth-title-main">사진관</span>
+          우리 학교 네컷
         </h1>
-
         <ol className="booth-steps" aria-label="사진 찍는 순서">
-          <li>사진 6장 찍기</li>
-          <li>마음에 드는 4장 고르기</li>
-          <li>프레임 골라 인쇄하기</li>
+          <li>6장 찍기</li>
+          <li>4장 고르기</li>
+          <li>프레임 골라 인쇄</li>
         </ol>
+      </section>
 
+      <section className="booth-actions">
         <button type="button" className="start-button booth-start" onClick={() => void startCamera()}>
           사진 찍기 시작
         </button>
-
         <p className="booth-privacy">
           사진은 이 태블릿 안에서만 만들어지고, 인쇄하고 2분이 지나면 지워져요.
         </p>
       </section>
-
-      <div className="booth-strip" aria-hidden="true">
-        {WELCOME_POSES.map((pose, index) => (
-          <div
-            className="booth-shot"
-            key={pose.label}
-            style={{ '--shot': index } as CSSProperties}
-          >
-            <span className="booth-pose">{pose.emoji}</span>
-            <span className="booth-pose-label">{pose.label}</span>
-          </div>
-        ))}
-        <p className="booth-strip-foot">우리 학교 4컷</p>
-      </div>
     </main>
   )
 }
