@@ -63,6 +63,28 @@
     "footerText": ""
   },
   {
+    "id": "art-festival",
+    "name": "예술제 · 축제",
+    "enabled": true,
+    "sortOrder": 18,
+    "image": "/frames/art-festival.png",
+    "category": "art",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
+  },
+  {
+    "id": "art-amusement",
+    "name": "예술제 · 놀이공원",
+    "enabled": true,
+    "sortOrder": 19,
+    "image": "/frames/art-amusement.png",
+    "category": "art",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
+  },
+  {
     "id": "art-orchestra",
     "name": "예술제 · 오케스트라",
     "enabled": true,
