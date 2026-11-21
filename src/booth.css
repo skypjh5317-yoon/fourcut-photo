@@ -1,19 +1,22 @@
 /*
  * 우리 학교 네컷 — 화면 디자인
- * 콘셉트: 하얀 종이 위 낙서 스티커. 흰 바탕 + 검은 글씨·버튼, 노란색은 "골랐다/지금" 표시에만 조금.
+ * 콘셉트: 카메라 캐릭터 "찰칵이"의 사진관. 크림색 인화지 바탕 + 코랄색 카메라 몸통 색을 주 버튼에,
+ * 플래시 노랑은 "지금" 표시에만 조금.
  * 글꼴은 기기에 이미 있는 고딕을 써서 학교망에서도 막히지 않는다.
  */
 
 :root {
-  --paper: #ffffff;
-  --ink: #141414;
-  --ink-soft: #6e6e73;
-  --ink-faint: #a1a1a6;
-  --surface: #f2f2f4;
-  --surface-strong: #e6e6ea;
-  --line: #e3e3e8;
-  --accent: #ffd43b;
-  --accent-soft: #fff6cf;
+  --paper: #fffaf3;
+  --ink: #2b2233;
+  --ink-soft: #74697a;
+  --ink-faint: #a99fae;
+  --surface: #f6ede2;
+  --surface-strong: #ecdfd0;
+  --line: #eadccb;
+  --primary: #ff6b57;
+  --primary-deep: #d9493a;
+  --accent: #ffd66b;
+  --accent-soft: #fff1cf;
   --danger: #c4372b;
   --radius-lg: 22px;
   --radius-md: 16px;
@@ -31,9 +34,10 @@
 .shelf-print,
 .picker-done {
   align-items: center;
-  background: var(--ink);
+  background: var(--primary);
   border: 0;
   border-radius: var(--radius-md);
+  box-shadow: 0 5px 0 var(--primary-deep);
   color: #fff;
   cursor: pointer;
   display: inline-flex;
@@ -53,13 +57,15 @@
 .shelf-next:active:not(:disabled),
 .shelf-print:active,
 .picker-done:active:not(:disabled) {
-  transform: scale(0.97);
+  box-shadow: 0 1px 0 var(--primary-deep);
+  transform: translateY(4px);
 }
 
 .capture-button:disabled,
 .shelf-next:disabled,
 .picker-done:disabled {
   background: var(--surface-strong);
+  box-shadow: none;
   color: var(--ink-faint);
   cursor: not-allowed;
 }
@@ -112,63 +118,80 @@
   .shelf-photo,
   .picker-card
 ):focus-visible {
-  outline: 3px solid var(--ink);
+  outline: 3px solid var(--primary);
   outline-offset: 4px;
 }
 
 /* ------------------------------------------------------------------
- * 낙서 로고
+ * 마스코트 찰칵이
  * ------------------------------------------------------------------ */
 
-.doodle-logo {
+.camera-mascot {
   display: block;
   height: auto;
   overflow: visible;
 }
 
-.doodle-logo .doodle-tile {
+.camera-mascot .mascot-print,
+.camera-mascot .mascot-eyes,
+.camera-mascot .mascot-spark {
   transform-box: fill-box;
-  transform-origin: 50% 100%;
+  transform-origin: 50% 50%;
 }
 
-/* 첫 화면: 네 칸이 하나씩 "퐁" 하고 나타나고, 고양이 꼬리가 살랑 */
-.doodle-logo.is-animated .doodle-tile {
-  animation: tile-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  animation-delay: calc(150ms + var(--tile) * 130ms);
+/* 사진이 아래 틈에서 스르륵 나오고, 눈을 가끔 깜빡이고, 반짝이가 반짝 */
+.camera-mascot.is-animated .mascot-print {
+  animation: print-out 900ms cubic-bezier(0.22, 1, 0.36, 1) 300ms both;
 }
 
-.doodle-logo.is-animated .doodle-cat {
-  animation: cat-peek 2.8s ease-in-out 1.2s infinite;
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
+.camera-mascot.is-animated .mascot-eyes {
+  animation: blink 4s ease-in-out 1.4s infinite;
 }
 
-@keyframes tile-pop {
+.camera-mascot.is-animated .mascot-spark {
+  animation: spark 2.4s ease-in-out infinite;
+}
+
+.camera-mascot.is-animated .spark-b {
+  animation-delay: 1.2s;
+}
+
+@keyframes print-out {
   from {
-    opacity: 0;
-    transform: translateY(18px) scale(0.6);
+    transform: translateY(-70px);
   }
 
   to {
-    opacity: 1;
     transform: none;
   }
 }
 
-@keyframes cat-peek {
+@keyframes blink {
   0%,
-  70%,
+  92%,
   100% {
     transform: none;
   }
 
-  80% {
-    transform: rotate(-6deg);
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes spark {
+  0%,
+  100% {
+    transform: scale(1) rotate(0);
   }
 
-  90% {
-    transform: rotate(5deg);
+  50% {
+    transform: scale(0.7) rotate(20deg);
   }
+}
+
+.result-mascot {
+  margin-bottom: 4px;
+  width: 84px;
 }
 
 /* ------------------------------------------------------------------
@@ -198,7 +221,7 @@
 }
 
 .booth-logo {
-  width: min(78vw, 400px);
+  width: min(56vw, 230px);
 }
 
 .booth-title {
@@ -232,10 +255,10 @@
 
 .booth-steps li::before {
   align-items: center;
-  border: 2px solid var(--ink);
+  background: var(--primary);
   border-radius: 50%;
   box-sizing: border-box;
-  color: var(--ink);
+  color: #fff;
   content: counter(step);
   display: inline-flex;
   font-size: 0.85rem;
@@ -354,7 +377,7 @@
   aspect-ratio: 1 / 1;
   border: 3px dashed rgba(255, 255, 255, 0.95);
   border-radius: 22px;
-  box-shadow: 0 0 0 9999px rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 9999px rgba(255, 250, 243, 0.4);
   height: 92%;
   left: 50%;
   max-width: 92%;
@@ -397,10 +420,11 @@
 .countdown-bubble {
   align-items: center;
   animation: count-pop 1s ease-out both;
-  background: var(--accent);
-  border: 6px solid var(--ink);
+  background: var(--primary);
+  border: 8px solid var(--paper);
   border-radius: 50%;
-  color: var(--ink);
+  box-shadow: 0 0 0 5px var(--ink);
+  color: #fff;
   display: flex;
   font-size: clamp(4.5rem, 13vw, 8rem);
   font-weight: 900;
@@ -480,7 +504,7 @@
 }
 
 .photo-dot.done {
-  background: var(--ink);
+  background: var(--primary);
 }
 
 .photo-dot.now {
@@ -595,10 +619,11 @@
   .picker-check {
     align-items: center;
     animation: sticker-in 260ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
-    background: var(--accent);
-    border: 3px solid var(--ink);
+    background: var(--primary);
+    border: 3px solid #fff;
     border-radius: 50%;
-    color: var(--ink);
+    box-shadow: 0 2px 6px rgba(43, 34, 51, 0.25);
+    color: #fff;
     display: flex;
     font-weight: 900;
     justify-content: center;
@@ -655,7 +680,7 @@
   }
 
   .shelf-photo.selected {
-    box-shadow: 0 0 0 4px var(--ink);
+    box-shadow: 0 0 0 4px var(--primary);
   }
 
   .shelf-photo:not(.selected) img {
@@ -816,7 +841,7 @@
   }
 
   .picker-card.selected .picker-thumb {
-    box-shadow: 0 0 0 4px var(--ink);
+    box-shadow: 0 0 0 4px var(--primary);
   }
 
   .picker-thumb .frame-thumbnail,
@@ -960,8 +985,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .doodle-logo.is-animated .doodle-tile,
-  .doodle-logo.is-animated .doodle-cat,
+  .camera-mascot.is-animated .mascot-print,
+  .camera-mascot.is-animated .mascot-eyes,
+  .camera-mascot.is-animated .mascot-spark,
   .countdown-bubble,
   .shelf-order,
   .picker-check {

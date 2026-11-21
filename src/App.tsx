@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import './booth.css'
-import DoodleLogo from './components/DoodleLogo'
+import CameraMascot from './components/CameraMascot'
 import type { PhotoFrame } from './data/frames'
 import { PHOTO_SLOT_ASPECT_RATIO } from './utils/photoUtils'
 import { createFourCutImage } from './utils/photoUtils'
@@ -383,6 +383,7 @@ function App() {
     return (
       <main className="result-screen shelf">
         <header className="result-header shelf-head">
+          <CameraMascot className="result-mascot" animated />
           <h1 className="shelf-title">사진 완성!</h1>
           <p className="shelf-hint">인쇄하기를 누르면 엽서 크기(10×15cm)로 인쇄돼요.</p>
         </header>
@@ -697,7 +698,7 @@ function App() {
   return (
     <main className="welcome-screen booth">
       <section className="booth-hero" aria-labelledby="booth-title">
-        <DoodleLogo className="booth-logo" animated />
+        <CameraMascot className="booth-logo" animated />
         <h1 id="booth-title" className="booth-title">
           우리 학교 네컷
         </h1>
