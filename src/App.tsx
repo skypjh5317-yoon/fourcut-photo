@@ -34,6 +34,7 @@ function App() {
   const [isAutoHomeScheduled, setIsAutoHomeScheduled] = useState(false)
   const autoHomeTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const guideRef = useRef<HTMLDivElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const capturedImagesRef = useRef<string[]>([])
   const requestIdRef = useRef(0)
@@ -128,19 +129,35 @@ function App() {
     }
 
     const captureSize = 1200
-    const targetAspectRatio = 1
-    const sourceAspectRatio = video.videoWidth / video.videoHeight
-    let sourceWidth = video.videoWidth
-    let sourceHeight = video.videoHeight
-    let sourceX = 0
-    let sourceY = 0
+    const videoWidth = video.videoWidth
+    const videoHeight = video.videoHeight
 
-    if (sourceAspectRatio > targetAspectRatio) {
-      sourceWidth = video.videoHeight * targetAspectRatio
-      sourceX = (video.videoWidth - sourceWidth) / 2
-    } else if (sourceAspectRatio < targetAspectRatio) {
-      sourceHeight = video.videoWidth / targetAspectRatio
-      sourceY = (video.videoHeight - sourceHeight) / 2
+    // 기본값: 영상 가운데 정사각형
+    let sourceWidth = Math.min(videoWidth, videoHeight)
+    let sourceHeight = sourceWidth
+    let sourceX = (videoWidth - sourceWidth) / 2
+    let sourceY = (videoHeight - sourceHeight) / 2
+
+    // 화면 전체에 꽉 채워(object-fit: cover) 보여 주므로,
+    // 화면 위 정사각형 틀이 실제 영상의 어느 부분인지 계산해서 그 부분만 찍는다.
+    const guide = guideRef.current
+    const videoRect = video.getBoundingClientRect()
+    const guideRect = guide?.getBoundingClientRect()
+    if (guideRect && guideRect.width > 0 && videoRect.width > 0 && videoRect.height > 0) {
+      const scale = Math.max(videoRect.width / videoWidth, videoRect.height / videoHeight)
+      const shownLeft = videoRect.left + (videoRect.width - videoWidth * scale) / 2
+      const shownTop = videoRect.top + (videoRect.height - videoHeight * scale) / 2
+      const size = Math.min(guideRect.width / scale, videoWidth, videoHeight)
+      let x = (guideRect.left - shownLeft) / scale
+      const y = (guideRect.top - shownTop) / scale
+      // 전면 카메라는 화면에 좌우를 뒤집어 보여 주므로 원본 영상에서는 반대쪽이다.
+      if (cameraFacing === 'user') {
+        x = videoWidth - (x + size)
+      }
+      sourceWidth = size
+      sourceHeight = size
+      sourceX = Math.min(Math.max(x, 0), videoWidth - size)
+      sourceY = Math.min(Math.max(y, 0), videoHeight - size)
     }
 
     const canvas = document.createElement('canvas')
@@ -642,7 +659,7 @@ function App() {
                 cameraStatus === 'ready' ? '' : 'hidden'
               }`}
             />
-            <div className="square-capture-guide" aria-hidden="true" />
+            <div ref={guideRef} className="square-capture-guide" aria-hidden="true" />
             {capturePhase === 'countdown' && countdown !== null && (
               <div className="countdown-overlay" aria-live="assertive">
                 <span className="countdown-bubble" key={`count-${countdown}`}>
