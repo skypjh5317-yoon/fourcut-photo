@@ -35,6 +35,7 @@ function App() {
   const autoHomeTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const guideRef = useRef<HTMLDivElement>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const capturedImagesRef = useRef<string[]>([])
   const requestIdRef = useRef(0)
@@ -202,12 +203,63 @@ function App() {
     setScreen('selection')
   }
 
+  // 휴대폰(특히 아이폰)은 버튼을 누를 때 소리 장치를 깨워 둬야 나중에 소리가 남
+  const unlockAudio = () => {
+    try {
+      if (!audioContextRef.current) {
+        const AudioCtx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+        if (!AudioCtx) return
+        audioContextRef.current = new AudioCtx()
+      }
+      if (audioContextRef.current.state === 'suspended') {
+        void audioContextRef.current.resume()
+      }
+    } catch {
+      // 소리를 못 내는 기기면 그냥 넘어감
+    }
+  }
+
+  // 파일 없이 만드는 '찰칵' 셔터 소리
+  const playShutterSound = () => {
+    const ctx = audioContextRef.current
+    if (!ctx) return
+    try {
+      if (ctx.state === 'suspended') void ctx.resume()
+      const now = ctx.currentTime
+      const makeClick = (start: number, length: number, volume: number, freq: number) => {
+        const size = Math.floor(ctx.sampleRate * length)
+        const buffer = ctx.createBuffer(1, size, ctx.sampleRate)
+        const data = buffer.getChannelData(0)
+        for (let i = 0; i < size; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / size, 3)
+        }
+        const source = ctx.createBufferSource()
+        source.buffer = buffer
+        const filter = ctx.createBiquadFilter()
+        filter.type = 'bandpass'
+        filter.frequency.value = freq
+        filter.Q.value = 0.8
+        const gain = ctx.createGain()
+        gain.gain.value = volume
+        source.connect(filter).connect(gain).connect(ctx.destination)
+        source.start(start)
+      }
+      makeClick(now, 0.05, 1.2, 3200) // 찰
+      makeClick(now + 0.07, 0.09, 0.9, 1800) // 칵
+    } catch {
+      // 소리 실패해도 촬영은 계속
+    }
+  }
+
   const captureAfterCountdown = (sequence: number) => {
     if (sequence !== captureSequenceRef.current) {
       return
     }
 
     const image = capturePhoto()
+    if (image) playShutterSound()
     if (!image) {
       setCapturePhase('idle')
       setCountdown(null)
@@ -264,6 +316,7 @@ function App() {
     if (cameraStatus !== 'ready' || capturePhase !== 'idle') {
       return
     }
+    unlockAudio()
     startCountdown()
   }
 

@@ -439,23 +439,25 @@
   width: var(--guide-size);
 }
 
-/* 노란 동그라미 안에 3 · 2 · 1 */
+/* 노란 동그라미 안에 3 · 2 · 1 — 얼굴이 보이도록 작고 반투명하게 */
 .countdown-bubble {
   align-items: center;
   animation: count-pop 1s ease-out both;
   background: var(--primary);
-  border: 8px solid var(--paper);
+  border: 4px solid var(--paper);
   border-radius: 50%;
-  box-shadow: 0 0 0 5px var(--ink);
+  box-shadow: 0 0 0 3px var(--ink);
   box-sizing: border-box;
   color: #fff;
   display: flex;
-  font-size: clamp(3.5rem, calc(var(--guide-size) * 0.3), 8rem);
+  font-size: clamp(2rem, calc(var(--guide-size) * 0.15), 4rem);
   font-weight: 900;
-  height: min(220px, calc(var(--guide-size) * 0.55));
+  height: min(120px, calc(var(--guide-size) * 0.28));
   justify-content: center;
   line-height: 1;
-  width: min(220px, calc(var(--guide-size) * 0.55));
+  opacity: 0.6;
+  pointer-events: none;
+  width: min(120px, calc(var(--guide-size) * 0.28));
 }
 
 @keyframes count-pop {
