@@ -61,5 +61,60 @@
     "title": "",
     "subtitle": "",
     "footerText": ""
+  },
+  {
+    "id": "art-orchestra",
+    "name": "예술제 · 오케스트라",
+    "enabled": true,
+    "sortOrder": 20,
+    "image": "/frames/art-orchestra.png",
+    "category": "art",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
+  },
+  {
+    "id": "art-afterschool",
+    "name": "예술제 · 방과후 솜씨",
+    "enabled": true,
+    "sortOrder": 21,
+    "image": "/frames/art-afterschool.png",
+    "category": "art",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
+  },
+  {
+    "id": "art-spotlight",
+    "name": "예술제 · 오늘의 주인공",
+    "enabled": true,
+    "sortOrder": 22,
+    "image": "/frames/art-spotlight.png",
+    "category": "art",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
+  },
+  {
+    "id": "art-ticket",
+    "name": "예술제 · 입장권",
+    "enabled": true,
+    "sortOrder": 23,
+    "image": "/frames/art-ticket.png",
+    "category": "art",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
+  },
+  {
+    "id": "art-bravo",
+    "name": "예술제 · 브라보",
+    "enabled": true,
+    "sortOrder": 24,
+    "image": "/frames/art-bravo.png",
+    "category": "art",
+    "title": "",
+    "subtitle": "",
+    "footerText": ""
   }
 ]
