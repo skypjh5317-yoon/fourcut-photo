@@ -336,6 +336,103 @@ export async function createFourCutImage(
     0.92,
   )
 }
+// 가로·세로로 평균을 내는 빠른 흐림 (슬라이딩 합계, 픽셀 수에 비례하는 속도)
+const boxBlur = (src: Float32Array, width: number, height: number, radius: number) => {
+  const tmp = new Float32Array(src.length)
+  const out = new Float32Array(src.length)
+  const size = radius * 2 + 1
+  for (let y = 0; y < height; y++) {
+    const row = y * width
+    let sum = 0
+    for (let k = -radius; k <= radius; k++) {
+      sum += src[row + Math.min(width - 1, Math.max(0, k))]
+    }
+    for (let x = 0; x < width; x++) {
+      tmp[row + x] = sum / size
+      const add = Math.min(width - 1, x + radius + 1)
+      const remove = Math.max(0, x - radius)
+      sum += src[row + add] - src[row + remove]
+    }
+  }
+  for (let x = 0; x < width; x++) {
+    let sum = 0
+    for (let k = -radius; k <= radius; k++) {
+      sum += tmp[Math.min(height - 1, Math.max(0, k)) * width + x]
+    }
+    for (let y = 0; y < height; y++) {
+      out[y * width + x] = sum / size
+      const add = Math.min(height - 1, y + radius + 1)
+      const remove = Math.max(0, y - radius)
+      sum += tmp[add * width + x] - tmp[remove * width + x]
+    }
+  }
+  return out
+}
+
+const softBand = (v: number, lo: number, hi: number, soft: number) =>
+  Math.min(1, Math.max(0, Math.min((v - lo) / soft + 1, (hi - v) / soft + 1)))
+
+/**
+ * 잡티 보정 — 피부색인 곳에서만, 주변보다 살짝 어두운 작은 점(잡티·뾰루지·모공)을 주변 피부색으로 메운다.
+ * 눈·눈썹·입·머리카락처럼 진하고 뚜렷한 부분은 피부색이 아니거나 차이가 커서 그대로 남는다.
+ */
+export const applyBlemishRetouch = (canvas: HTMLCanvasElement) => {
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  const { width, height } = canvas
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  const imageData = ctx.getImageData(0, 0, width, height)
+  const data = imageData.data
+  const count = width * height
+
+  const skin = new Float32Array(count)
+  const sr = new Float32Array(count)
+  const sg = new Float32Array(count)
+  const sb = new Float32Array(count)
+  for (let p = 0, i = 0; p < count; p++, i += 4) {
+    const r = data[i]
+    const g = data[i + 1]
+    const b = data[i + 2]
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b
+    const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b
+    const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b
+    const m =
+      softBand(cb, 77, 127, 8) * softBand(cr, 133, 173, 8) * Math.min(1, Math.max(0, (lum - 60) / 30))
+    skin[p] = m
+    sr[p] = r * m
+    sg[p] = g * m
+    sb[p] = b * m
+  }
+
+  // 피부만 모아서 흐리게 → 눈썹·눈 같은 진한 색이 피부에 번지지 않음
+  const radius = Math.max(3, Math.round(width * 0.012))
+  const blur2 = (a: Float32Array) => boxBlur(boxBlur(a, width, height, radius), width, height, radius)
+  const den = blur2(skin)
+  const br = blur2(sr)
+  const bg = blur2(sg)
+  const bb = blur2(sb)
+
+  const STRENGTH = 0.85
+  for (let p = 0, i = 0; p < count; p++, i += 4) {
+    const m = skin[p]
+    if (m <= 0.01 || den[p] < 0.05) continue
+    const r = data[i]
+    const g = data[i + 1]
+    const b = data[i + 2]
+    const tr = br[p] / den[p]
+    const tg = bg[p] / den[p]
+    const tb = bb[p] / den[p]
+    const d = 0.299 * r + 0.587 * g + 0.114 * b - (0.299 * tr + 0.587 * tg + 0.114 * tb)
+    // 어두운 점은 꽤 진해도 지우고, 밝은 쪽(눈빛·하이라이트)은 조금만
+    const keep = d < 0 ? Math.min(1, Math.max(0, (60 + d) / 25)) : Math.min(1, Math.max(0, (30 - d) / 15))
+    const w = m * keep * Math.min(1, den[p] * 2) * STRENGTH
+    data[i] = r + (tr - r) * w
+    data[i + 1] = g + (tg - g) * w
+    data[i + 2] = b + (tb - b) * w
+  }
+  ctx.putImageData(imageData, 0, 0)
+}
+
 /**
  * 맑은 효과 — 갤럭시 카메라 '맑은' 필터처럼 밝고 깨끗하게.
  * 실내 조명의 누런/분홍 기운을 걷어 내고, 중간 밝기를 올리되 검은색은 진하게 유지한다.
