@@ -447,19 +447,31 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   const imageData = ctx.getImageData(0, 0, width, height)
   const data = imageData.data
 
-  // 1) 색 기운 걷어 내기: 사진 전체 평균색을 회색 쪽으로 절반만 당긴다
+  // 1) 색 기운 걷어 내기: 피부가 아닌 곳(배경)의 평균색을 회색 쪽으로 당긴다.
+  //    얼굴이 화면 대부분이면 피부색이 창백해지지 않도록 세기를 줄인다.
   let sumR = 0
   let sumG = 0
   let sumB = 0
+  let sampled = 0
+  let used = 0
   for (let i = 0; i < data.length; i += 16) {
-    sumR += data[i]
-    sumG += data[i + 1]
-    sumB += data[i + 2]
+    const r = data[i]
+    const g = data[i + 1]
+    const b = data[i + 2]
+    sampled++
+    const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b
+    const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b
+    if (cb > 77 && cb < 127 && cr > 133 && cr < 173) continue
+    sumR += r
+    sumG += g
+    sumB += b
+    used++
   }
+  const wbStrength = 0.65 * Math.min(1, used / Math.max(1, sampled) / 0.3)
   const avg = (sumR + sumG + sumB) / 3
   const balance = (sum: number) => {
-    if (sum === 0) return 1
-    const factor = 1 + 0.65 * (avg / sum - 1)
+    if (sum === 0 || used === 0) return 1
+    const factor = 1 + wbStrength * (avg / sum - 1)
     return Math.min(1.18, Math.max(0.85, factor))
   }
   const fr = balance(sumR)
@@ -530,4 +542,32 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
 
   ctx.globalCompositeOperation = 'source-over'
   ctx.globalAlpha = 1
+}
+
+/**
+ * 선명하게 — 밝기 성분만 살짝 또렷하게 (눈·머리카락·글자).
+ * 아주 작은 차이(노이즈)는 키우지 않아 지저분해지지 않는다.
+ */
+export const applySharpen = (canvas: HTMLCanvasElement, amount = 0.6) => {
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  const { width, height } = canvas
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  const imageData = ctx.getImageData(0, 0, width, height)
+  const data = imageData.data
+  const count = width * height
+  const lum = new Float32Array(count)
+  for (let p = 0, i = 0; p < count; p++, i += 4) {
+    lum[p] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
+  }
+  const blurred = boxBlur(lum, width, height, 2)
+  for (let p = 0, i = 0; p < count; p++, i += 4) {
+    const diff = lum[p] - blurred[p]
+    if (Math.abs(diff) < 3) continue
+    const add = diff * amount
+    data[i] += add
+    data[i + 1] += add
+    data[i + 2] += add
+  }
+  ctx.putImageData(imageData, 0, 0)
 }

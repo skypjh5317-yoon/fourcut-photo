@@ -1093,3 +1093,19 @@
     transition: none;
   }
 }
+
+/* 화질 확인용 해상도 표시 */
+.camera-debug {
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 11px;
+  left: 8px;
+  line-height: 1.4;
+  margin: 0;
+  padding: 4px 8px;
+  pointer-events: none;
+  position: absolute;
+  top: max(70px, calc(env(safe-area-inset-top) + 60px));
+  z-index: 6;
+}

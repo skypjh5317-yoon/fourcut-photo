@@ -4,10 +4,16 @@ import './booth.css'
 import CameraMascot from './components/CameraMascot'
 import type { PhotoFrame } from './data/frames'
 import { PHOTO_SLOT_ASPECT_RATIO } from './utils/photoUtils'
-import { applyBlemishRetouch, applySoftBeauty, createFourCutImage } from './utils/photoUtils'
+import { applyBlemishRetouch, applySharpen, applySoftBeauty, createFourCutImage } from './utils/photoUtils'
 
 type Screen = 'welcome' | 'camera' | 'selection' | 'background' | 'result'
 type CameraStatus = 'idle' | 'loading' | 'ready' | 'error'
+// 화질 원인 확인용 해상도 표시 — 확인이 끝나면 false로 바꾸면 사라짐
+const SHOW_CAMERA_DEBUG = true
+
+type ImageCaptureLike = { takePhoto: (settings?: { fillLightMode?: string }) => Promise<Blob> }
+type ImageCaptureCtorLike = new (track: MediaStreamTrack) => ImageCaptureLike
+
 type CapturePhase = 'idle' | 'countdown' | 'flash' | 'preparing'
 type CameraFacing = 'user' | 'environment'
 
@@ -36,6 +42,10 @@ function App() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const guideRef = useRef<HTMLDivElement>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
+  // 안드로이드 크롬 등에서 '영상 캡처'가 아니라 카메라의 진짜 '사진 촬영'을 쓰기 위한 도구
+  const imageCaptureRef = useRef<ImageCaptureLike | null>(null)
+  const [videoResolution, setVideoResolution] = useState('')
+  const [lastCaptureInfo, setLastCaptureInfo] = useState('')
   const streamRef = useRef<MediaStream | null>(null)
   const capturedImagesRef = useRef<string[]>([])
   const requestIdRef = useRef(0)
@@ -65,6 +75,7 @@ function App() {
     requestIdRef.current += 1
     streamRef.current?.getTracks().forEach((track) => track.stop())
     streamRef.current = null
+    imageCaptureRef.current = null
 
     if (videoRef.current) {
       videoRef.current.srcObject = null
@@ -98,9 +109,9 @@ function App() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: facing },
-          aspectRatio: { ideal: 3 / 4 },
-          width: { ideal: 1080 },
-          height: { ideal: 1440 },
+          // 방향(가로/세로)을 강요하지 않고 넉넉하게 요청 → 브라우저가 고를 수 있는 가장 좋은 해상도
+          width: { ideal: 1920 },
+          height: { ideal: 1920 },
         },
         audio: false,
       })
@@ -111,6 +122,33 @@ function App() {
       }
 
       streamRef.current = stream
+      const track = stream.getVideoTracks()[0]
+      // 카메라가 낼 수 있는 최대 해상도로 한 번 더 올려 본다 (너무 크면 화면이 버벅여서 2560까지만)
+      try {
+        const caps = track?.getCapabilities?.()
+        const maxW = caps?.width?.max
+        const maxH = caps?.height?.max
+        if (track && maxW && maxH) {
+          await track.applyConstraints({
+            width: { ideal: Math.min(maxW, 2560) },
+            height: { ideal: Math.min(maxH, 2560) },
+          })
+        }
+      } catch {
+        // 올리기 실패하면 처음 받은 해상도 그대로
+      }
+      if (requestId !== requestIdRef.current) {
+        stream.getTracks().forEach((t) => t.stop())
+        return
+      }
+      try {
+        const ImageCaptureCtor = (window as unknown as { ImageCapture?: ImageCaptureCtorLike })
+          .ImageCapture
+        imageCaptureRef.current = ImageCaptureCtor && track ? new ImageCaptureCtor(track) : null
+      } catch {
+        imageCaptureRef.current = null
+      }
+      setLastCaptureInfo('')
       if (videoRef.current) {
         videoRef.current.srcObject = stream
       }
@@ -123,7 +161,26 @@ function App() {
     }
   }
 
-  const capturePhoto = () => {
+  // 카메라의 진짜 사진 촬영(takePhoto)을 시도. 안 되거나 오래 걸리면 null
+  const takeRealPhoto = async (): Promise<ImageBitmap | null> => {
+    const imageCapture = imageCaptureRef.current
+    if (!imageCapture || typeof createImageBitmap !== 'function') return null
+    try {
+      // 플래시는 끄고 찍기 (지원 안 하는 기기면 기본 설정으로 다시)
+      const shoot = () =>
+        imageCapture.takePhoto({ fillLightMode: 'off' }).catch(() => imageCapture.takePhoto())
+      const blob = await Promise.race([
+        shoot(),
+        new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 2500)),
+      ])
+      if (!blob) return null
+      return await createImageBitmap(blob)
+    } catch {
+      return null
+    }
+  }
+
+  const capturePhoto = async () => {
     const video = videoRef.current
     if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
       return null
@@ -161,14 +218,37 @@ function App() {
       sourceY = Math.min(Math.max(y, 0), videoHeight - size)
     }
 
+    // 진짜 사진을 받았고, 영상과 비율·방향이 같을 때만 사진을 쓴다 (다르면 위치가 어긋나므로 영상 사용)
+    let source: CanvasImageSource = video
+    let ratio = 1
+    let mode = `영상 ${videoWidth}×${videoHeight}`
+    const photo = await takeRealPhoto()
+    if (photo) {
+      const sameShape =
+        Math.abs(photo.width / photo.height - videoWidth / videoHeight) < 0.03 &&
+        photo.width >= videoWidth
+      if (sameShape) {
+        source = photo
+        ratio = photo.width / videoWidth
+        mode = `사진 ${photo.width}×${photo.height}`
+      } else {
+        mode = `영상 ${videoWidth}×${videoHeight} (사진 ${photo.width}×${photo.height}은 비율이 달라 미사용)`
+      }
+    }
+    setLastCaptureInfo(`${mode} · 잘라낸 칸 ${Math.round(sourceWidth * ratio)}px`)
+
     const canvas = document.createElement('canvas')
     canvas.width = captureSize
     canvas.height = captureSize
     const context = canvas.getContext('2d')
 
     if (!context) {
+      photo?.close()
       return null
     }
+
+    context.imageSmoothingEnabled = true
+    context.imageSmoothingQuality = 'high'
 
     // 전면 카메라는 화면에 거울처럼 보이므로, 저장되는 사진도 화면과 같은 방향으로 맞춘다.
     if (cameraFacing === 'user') {
@@ -177,16 +257,17 @@ function App() {
     }
 
     context.drawImage(
-      video,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
+      source,
+      sourceX * ratio,
+      sourceY * ratio,
+      sourceWidth * ratio,
+      sourceHeight * ratio,
       0,
       0,
       captureSize,
       captureSize,
     )
+    photo?.close()
     try {
       applyBlemishRetouch(canvas)
     } catch {
@@ -196,6 +277,11 @@ function App() {
       applySoftBeauty(canvas)
     } catch {
       // 효과가 실패해도 원본 사진은 그대로 저장
+    }
+    try {
+      applySharpen(canvas)
+    } catch {
+      // 선명하게 실패해도 계속
     }
     return canvas.toDataURL('image/jpeg', 0.92)
   }
@@ -263,13 +349,18 @@ function App() {
     }
   }
 
-  const captureAfterCountdown = (sequence: number) => {
+  const captureAfterCountdown = async (sequence: number) => {
     if (sequence !== captureSequenceRef.current) {
       return
     }
 
-    const image = capturePhoto()
-    if (image) playShutterSound()
+    playShutterSound()
+    setCountdown(null)
+    setCapturePhase('flash')
+    const image = await capturePhoto()
+    if (sequence !== captureSequenceRef.current) {
+      return
+    }
     if (!image) {
       setCapturePhase('idle')
       setCountdown(null)
@@ -316,7 +407,7 @@ function App() {
         setCountdown(1)
         timerRef.current = window.setTimeout(() => {
           if (sequence !== captureSequenceRef.current) return
-          captureAfterCountdown(sequence)
+          void captureAfterCountdown(sequence)
         }, 1000)
       }, 1000)
     }, 1000)
@@ -718,6 +809,16 @@ function App() {
               autoPlay
               playsInline
               muted
+              onLoadedMetadata={(event) =>
+                setVideoResolution(
+                  `${event.currentTarget.videoWidth}×${event.currentTarget.videoHeight}`,
+                )
+              }
+              onResize={(event) =>
+                setVideoResolution(
+                  `${event.currentTarget.videoWidth}×${event.currentTarget.videoHeight}`,
+                )
+              }
               className={`video-preview ${cameraFacing === 'user' ? 'mirrored' : ''} ${
                 cameraStatus === 'ready' ? '' : 'hidden'
               }`}
@@ -737,6 +838,18 @@ function App() {
               </div>
             )}
           </div>
+          {SHOW_CAMERA_DEBUG && cameraStatus === 'ready' && (
+            <p className="camera-debug">
+              카메라 {videoResolution || '확인 중'} · 사진촬영{' '}
+              {imageCaptureRef.current ? '지원' : '미지원'}
+              {lastCaptureInfo && (
+                <>
+                  <br />
+                  마지막: {lastCaptureInfo}
+                </>
+              )}
+            </p>
+          )}
           <div className="camera-bottom">
             <div className="photo-progress-wrap">
               <div className="photo-dots" aria-hidden="true">
