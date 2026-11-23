@@ -352,9 +352,9 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   const lut = new Uint8ClampedArray(256)
   for (let i = 0; i < 256; i++) {
     const v = i / 255
-    const lifted = Math.pow(v, 0.85) // 밝게(그림자 위주)
-    const soft = 0.5 + (lifted - 0.5) * 0.9 // 대비 살짝 낮춤
-    lut[i] = Math.round(soft * 255 + 6)
+    const lifted = Math.pow(v, 0.78) // 밝게(그림자 위주)
+    const soft = 0.5 + (lifted - 0.5) * 0.84 // 대비 살짝 낮춤
+    lut[i] = Math.round(soft * 255 + 10)
   }
   for (let i = 0; i < data.length; i += 4) {
     let r = lut[data[i]]
@@ -366,9 +366,9 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
     g = gray + (g - gray) * 1.06
     b = gray + (b - gray) * 1.06
     // 따뜻한 분홍빛
-    data[i] = r + 6
+    data[i] = r + 9
     data[i + 1] = g + 1
-    data[i + 2] = b + 3
+    data[i + 2] = b + 5
   }
   ctx.putImageData(imageData, 0, 0)
 
@@ -400,7 +400,7 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   // 피부 결 부드럽게 (살짝만 섞어서 눈·입은 또렷하게 남김)
   const smooth = makeBlurred(0.12)
   if (smooth) {
-    ctx.globalAlpha = 0.22
+    ctx.globalAlpha = 0.34
     ctx.drawImage(smooth, 0, 0, width, height)
   }
 
@@ -408,7 +408,7 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   const glow = makeBlurred(0.06)
   if (glow) {
     ctx.globalCompositeOperation = 'screen'
-    ctx.globalAlpha = 0.18
+    ctx.globalAlpha = 0.32
     ctx.drawImage(glow, 0, 0, width, height)
   }
 
