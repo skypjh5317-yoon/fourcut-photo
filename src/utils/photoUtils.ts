@@ -362,8 +362,8 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   const avg = (sumR + sumG + sumB) / 3
   const balance = (sum: number) => {
     if (sum === 0) return 1
-    const factor = 1 + 0.5 * (avg / sum - 1)
-    return Math.min(1.15, Math.max(0.87, factor))
+    const factor = 1 + 0.65 * (avg / sum - 1)
+    return Math.min(1.18, Math.max(0.85, factor))
   }
   const fr = balance(sumR)
   const fg = balance(sumG)
@@ -372,8 +372,9 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   // 2) 밝기 곡선: 중간 밝기는 확 올리고 검은색은 진하게
   const lut = new Float32Array(256)
   for (let i = 0; i < 256; i++) {
-    const v = Math.pow(i / 255, 0.82)
-    lut[i] = Math.max(0, (v - 0.03) / 0.97) * 255
+    const v = Math.max(0, (Math.pow(i / 255, 0.7) - 0.02) / 0.98)
+    // 전체를 하얀빛 쪽으로 살짝 끌어올림
+    lut[i] = Math.min(1, v + (1 - v) * 0.08) * 255
   }
   const toByte = (v: number) => lut[v > 255 ? 255 : v < 0 ? 0 : Math.round(v)]
 
@@ -383,9 +384,9 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
     let b = toByte(data[i + 2] * fb)
     // 3) 색을 살짝 선명하게
     const gray = 0.299 * r + 0.587 * g + 0.114 * b
-    r = gray + (r - gray) * 1.1
-    g = gray + (g - gray) * 1.1
-    b = gray + (b - gray) * 1.1
+    r = gray + (r - gray) * 1.0
+    g = gray + (g - gray) * 1.0
+    b = gray + (b - gray) * 1.0
     data[i] = r
     data[i + 1] = g
     data[i + 2] = b
@@ -426,7 +427,7 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   const glow = makeBlurred(0.06)
   if (glow) {
     ctx.globalCompositeOperation = 'screen'
-    ctx.globalAlpha = 0.1
+    ctx.globalAlpha = 0.12
     ctx.drawImage(glow, 0, 0, width, height)
   }
 

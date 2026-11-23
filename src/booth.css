@@ -372,7 +372,7 @@
 .video-preview {
   display: block;
   /* 화면 미리보기도 찍히는 사진처럼 맑고 밝게 */
-  filter: brightness(1.14) contrast(1.02) saturate(1.1);
+  filter: brightness(1.22) contrast(0.95) saturate(1);
   height: 100%;
   object-fit: cover;
   width: 100%;
