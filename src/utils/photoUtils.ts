@@ -337,7 +337,8 @@ export async function createFourCutImage(
   )
 }
 /**
- * 뽀샤시 효과 — 사진을 밝고 부드럽게, 피부는 살짝 화사하게.
+ * 맑은 효과 — 갤럭시 카메라 '맑은' 필터처럼 밝고 깨끗하게.
+ * 실내 조명의 누런/분홍 기운을 걷어 내고, 중간 밝기를 올리되 검은색은 진하게 유지한다.
  * ctx.filter를 지원하지 않는 아이폰에서도 똑같이 나오도록 픽셀을 직접 다룬다.
  */
 export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
@@ -346,33 +347,52 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   const { width, height } = canvas
   ctx.setTransform(1, 0, 0, 1, 0, 0)
 
-  // 1) 밝기·톤: 어두운 곳을 살짝 들어 올리고, 대비는 낮추고, 따뜻한 분홍빛
   const imageData = ctx.getImageData(0, 0, width, height)
   const data = imageData.data
-  const lut = new Uint8ClampedArray(256)
-  for (let i = 0; i < 256; i++) {
-    const v = i / 255
-    const lifted = Math.pow(v, 0.78) // 밝게(그림자 위주)
-    const soft = 0.5 + (lifted - 0.5) * 0.84 // 대비 살짝 낮춤
-    lut[i] = Math.round(soft * 255 + 10)
+
+  // 1) 색 기운 걷어 내기: 사진 전체 평균색을 회색 쪽으로 절반만 당긴다
+  let sumR = 0
+  let sumG = 0
+  let sumB = 0
+  for (let i = 0; i < data.length; i += 16) {
+    sumR += data[i]
+    sumG += data[i + 1]
+    sumB += data[i + 2]
   }
+  const avg = (sumR + sumG + sumB) / 3
+  const balance = (sum: number) => {
+    if (sum === 0) return 1
+    const factor = 1 + 0.5 * (avg / sum - 1)
+    return Math.min(1.15, Math.max(0.87, factor))
+  }
+  const fr = balance(sumR)
+  const fg = balance(sumG)
+  const fb = balance(sumB)
+
+  // 2) 밝기 곡선: 중간 밝기는 확 올리고 검은색은 진하게
+  const lut = new Float32Array(256)
+  for (let i = 0; i < 256; i++) {
+    const v = Math.pow(i / 255, 0.82)
+    lut[i] = Math.max(0, (v - 0.03) / 0.97) * 255
+  }
+  const toByte = (v: number) => lut[v > 255 ? 255 : v < 0 ? 0 : Math.round(v)]
+
   for (let i = 0; i < data.length; i += 4) {
-    let r = lut[data[i]]
-    let g = lut[data[i + 1]]
-    let b = lut[data[i + 2]]
-    // 채도 살짝 올리기
+    let r = toByte(data[i] * fr)
+    let g = toByte(data[i + 1] * fg)
+    let b = toByte(data[i + 2] * fb)
+    // 3) 색을 살짝 선명하게
     const gray = 0.299 * r + 0.587 * g + 0.114 * b
-    r = gray + (r - gray) * 1.06
-    g = gray + (g - gray) * 1.06
-    b = gray + (b - gray) * 1.06
-    // 따뜻한 분홍빛
-    data[i] = r + 9
-    data[i + 1] = g + 1
-    data[i + 2] = b + 5
+    r = gray + (r - gray) * 1.1
+    g = gray + (g - gray) * 1.1
+    b = gray + (b - gray) * 1.1
+    data[i] = r
+    data[i + 1] = g
+    data[i + 2] = b
   }
   ctx.putImageData(imageData, 0, 0)
 
-  // 2) 부드러운 빛번짐(뽀샤시): 작게 줄였다 키운 흐린 사진을 겹친다
+  // 4) 아주 살짝만 부드럽게 + 은은한 빛 (맑은 느낌은 유지)
   const makeBlurred = (scale: number) => {
     const small = document.createElement('canvas')
     small.width = Math.max(1, Math.round(width * scale))
@@ -397,18 +417,16 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
 
-  // 피부 결 부드럽게 (살짝만 섞어서 눈·입은 또렷하게 남김)
-  const smooth = makeBlurred(0.12)
+  const smooth = makeBlurred(0.1)
   if (smooth) {
-    ctx.globalAlpha = 0.34
+    ctx.globalAlpha = 0.12
     ctx.drawImage(smooth, 0, 0, width, height)
   }
 
-  // 화사한 빛번짐
   const glow = makeBlurred(0.06)
   if (glow) {
     ctx.globalCompositeOperation = 'screen'
-    ctx.globalAlpha = 0.32
+    ctx.globalAlpha = 0.1
     ctx.drawImage(glow, 0, 0, width, height)
   }
 

@@ -371,8 +371,8 @@
 
 .video-preview {
   display: block;
-  /* 화면 미리보기도 찍히는 사진처럼 뽀샤시하게 */
-  filter: brightness(1.16) contrast(0.84) saturate(1.06) sepia(0.08);
+  /* 화면 미리보기도 찍히는 사진처럼 맑고 밝게 */
+  filter: brightness(1.14) contrast(1.02) saturate(1.1);
   height: 100%;
   object-fit: cover;
   width: 100%;
