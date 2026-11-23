@@ -491,9 +491,9 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   // 2) 밝기 곡선: 중간 밝기는 확 올리고 검은색은 진하게
   const lut = new Float32Array(256)
   for (let i = 0; i < 256; i++) {
-    const v = Math.max(0, (Math.pow(i / 255, 0.85) - 0.02) / 0.98)
+    const v = Math.max(0, (Math.pow(i / 255, 0.78) - 0.02) / 0.98)
     // 전체를 하얀빛 쪽으로 살짝 끌어올림
-    lut[i] = Math.min(1, v + (1 - v) * 0.03) * 255
+    lut[i] = Math.min(1, v + (1 - v) * 0.05) * 255
   }
   const toByte = (v: number) => lut[v > 255 ? 255 : v < 0 ? 0 : Math.round(v)]
 

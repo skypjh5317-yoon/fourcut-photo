@@ -9,7 +9,7 @@ import { applyBlemishRetouch, applySharpen, applySoftBeauty, createFourCutImage 
 type Screen = 'welcome' | 'camera' | 'selection' | 'background' | 'result'
 type CameraStatus = 'idle' | 'loading' | 'ready' | 'error'
 // 화질 원인 확인용 해상도 표시 — 확인이 끝나면 false로 바꾸면 사라짐
-const SHOW_CAMERA_DEBUG = true
+const SHOW_CAMERA_DEBUG = false
 
 type ImageCaptureLike = { takePhoto: (settings?: { fillLightMode?: string }) => Promise<Blob> }
 type ImageCaptureCtorLike = new (track: MediaStreamTrack) => ImageCaptureLike
