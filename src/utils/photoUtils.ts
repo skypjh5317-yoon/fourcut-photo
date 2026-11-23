@@ -6,6 +6,8 @@ import type { PhotoFrame } from '../data/frames'
  */
 export const CANVAS_WIDTH = 1000
 export const CANVAS_HEIGHT = 1480
+// 결과물 해상도 배율 (2 → 2000×2960)
+const OUTPUT_SCALE = 2
 
 // 전체 디자인 여백
 const SIDE_MARGIN = 40
@@ -170,14 +172,20 @@ export async function createFourCutImage(
 ): Promise<string> {
   const canvas = document.createElement('canvas')
 
-  canvas.width = CANVAS_WIDTH
-  canvas.height = CANVAS_HEIGHT
+  // 결과 사진을 2배 크기로 만든다 (2000×2960).
+  // 자리 계산은 그대로 1000×1480 기준이고, 그리기만 2배로 해서 사진이 훨씬 또렷해진다.
+  canvas.width = CANVAS_WIDTH * OUTPUT_SCALE
+  canvas.height = CANVAS_HEIGHT * OUTPUT_SCALE
 
   const context = canvas.getContext('2d')
 
   if (!context) {
     throw new Error('Canvas를 사용할 수 없습니다.')
   }
+
+  context.scale(OUTPUT_SCALE, OUTPUT_SCALE)
+  context.imageSmoothingEnabled = true
+  context.imageSmoothingQuality = 'high'
 
   // --------------------------------------------------
   // 1. 배경
