@@ -4,7 +4,7 @@ import './booth.css'
 import CameraMascot from './components/CameraMascot'
 import type { PhotoFrame } from './data/frames'
 import { PHOTO_SLOT_ASPECT_RATIO } from './utils/photoUtils'
-import { createFourCutImage } from './utils/photoUtils'
+import { applySoftBeauty, createFourCutImage } from './utils/photoUtils'
 
 type Screen = 'welcome' | 'camera' | 'selection' | 'background' | 'result'
 type CameraStatus = 'idle' | 'loading' | 'ready' | 'error'
@@ -187,6 +187,11 @@ function App() {
       captureSize,
       captureSize,
     )
+    try {
+      applySoftBeauty(canvas)
+    } catch {
+      // 효과가 실패해도 원본 사진은 그대로 저장
+    }
     return canvas.toDataURL('image/jpeg', 0.92)
   }
 

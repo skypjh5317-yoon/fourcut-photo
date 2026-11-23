@@ -336,3 +336,82 @@ export async function createFourCutImage(
     0.92,
   )
 }
+/**
+ * 뽀샤시 효과 — 사진을 밝고 부드럽게, 피부는 살짝 화사하게.
+ * ctx.filter를 지원하지 않는 아이폰에서도 똑같이 나오도록 픽셀을 직접 다룬다.
+ */
+export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+  const { width, height } = canvas
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+
+  // 1) 밝기·톤: 어두운 곳을 살짝 들어 올리고, 대비는 낮추고, 따뜻한 분홍빛
+  const imageData = ctx.getImageData(0, 0, width, height)
+  const data = imageData.data
+  const lut = new Uint8ClampedArray(256)
+  for (let i = 0; i < 256; i++) {
+    const v = i / 255
+    const lifted = Math.pow(v, 0.85) // 밝게(그림자 위주)
+    const soft = 0.5 + (lifted - 0.5) * 0.9 // 대비 살짝 낮춤
+    lut[i] = Math.round(soft * 255 + 6)
+  }
+  for (let i = 0; i < data.length; i += 4) {
+    let r = lut[data[i]]
+    let g = lut[data[i + 1]]
+    let b = lut[data[i + 2]]
+    // 채도 살짝 올리기
+    const gray = 0.299 * r + 0.587 * g + 0.114 * b
+    r = gray + (r - gray) * 1.06
+    g = gray + (g - gray) * 1.06
+    b = gray + (b - gray) * 1.06
+    // 따뜻한 분홍빛
+    data[i] = r + 6
+    data[i + 1] = g + 1
+    data[i + 2] = b + 3
+  }
+  ctx.putImageData(imageData, 0, 0)
+
+  // 2) 부드러운 빛번짐(뽀샤시): 작게 줄였다 키운 흐린 사진을 겹친다
+  const makeBlurred = (scale: number) => {
+    const small = document.createElement('canvas')
+    small.width = Math.max(1, Math.round(width * scale))
+    small.height = Math.max(1, Math.round(height * scale))
+    const sctx = small.getContext('2d')
+    if (!sctx) return null
+    sctx.imageSmoothingEnabled = true
+    sctx.imageSmoothingQuality = 'high'
+    sctx.drawImage(canvas, 0, 0, small.width, small.height)
+    // 한 번에 키우면 깍두기처럼 보이므로 두 단계로 키운다
+    const mid = document.createElement('canvas')
+    mid.width = Math.round(width / 3)
+    mid.height = Math.round(height / 3)
+    const mctx = mid.getContext('2d')
+    if (!mctx) return null
+    mctx.imageSmoothingEnabled = true
+    mctx.imageSmoothingQuality = 'high'
+    mctx.drawImage(small, 0, 0, mid.width, mid.height)
+    return mid
+  }
+
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+
+  // 피부 결 부드럽게 (살짝만 섞어서 눈·입은 또렷하게 남김)
+  const smooth = makeBlurred(0.12)
+  if (smooth) {
+    ctx.globalAlpha = 0.22
+    ctx.drawImage(smooth, 0, 0, width, height)
+  }
+
+  // 화사한 빛번짐
+  const glow = makeBlurred(0.06)
+  if (glow) {
+    ctx.globalCompositeOperation = 'screen'
+    ctx.globalAlpha = 0.18
+    ctx.drawImage(glow, 0, 0, width, height)
+  }
+
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.globalAlpha = 1
+}
