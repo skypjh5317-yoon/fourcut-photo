@@ -413,14 +413,14 @@ export const applyBlemishRetouch = (canvas: HTMLCanvasElement) => {
   }
 
   // 피부만 모아서 흐리게 → 눈썹·눈 같은 진한 색이 피부에 번지지 않음
-  const radius = Math.max(3, Math.round(width * 0.012))
+  const radius = Math.max(3, Math.round(width * 0.008))
   const blur2 = (a: Float32Array) => boxBlur(boxBlur(a, width, height, radius), width, height, radius)
   const den = blur2(skin)
   const br = blur2(sr)
   const bg = blur2(sg)
   const bb = blur2(sb)
 
-  const STRENGTH = 0.85
+  const STRENGTH = 0.7
   for (let p = 0, i = 0; p < count; p++, i += 4) {
     const m = skin[p]
     if (m <= 0.01 || den[p] < 0.05) continue
@@ -431,8 +431,10 @@ export const applyBlemishRetouch = (canvas: HTMLCanvasElement) => {
     const tg = bg[p] / den[p]
     const tb = bb[p] / den[p]
     const d = 0.299 * r + 0.587 * g + 0.114 * b - (0.299 * tr + 0.587 * tg + 0.114 * tb)
-    // 어두운 점은 꽤 진해도 지우고, 밝은 쪽(눈빛·하이라이트)은 조금만
-    const keep = d < 0 ? Math.min(1, Math.max(0, (60 + d) / 25)) : Math.min(1, Math.max(0, (30 - d) / 15))
+    // 주변보다 '확실히 어두운 점'만 메운다. 자잘한 피부 결은 남겨서 플라스틱처럼 안 보이게.
+    // 눈썹·눈처럼 아주 진한 곳(d가 매우 작음)은 건드리지 않는다.
+    if (d >= 0) continue
+    const keep = Math.min(1, Math.max(0, (-d - 4) / 10)) * Math.min(1, Math.max(0, (60 + d) / 25))
     const w = m * keep * Math.min(1, den[p] * 2) * STRENGTH
     data[i] = r + (tr - r) * w
     data[i + 1] = g + (tg - g) * w
@@ -475,7 +477,7 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
     sumB += b
     used++
   }
-  const wbStrength = 0.65 * Math.min(1, used / Math.max(1, sampled) / 0.3)
+  const wbStrength = 0.4 * Math.min(1, used / Math.max(1, sampled) / 0.3)
   const avg = (sumR + sumG + sumB) / 3
   const balance = (sum: number) => {
     if (sum === 0 || used === 0) return 1
@@ -489,9 +491,9 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
   // 2) 밝기 곡선: 중간 밝기는 확 올리고 검은색은 진하게
   const lut = new Float32Array(256)
   for (let i = 0; i < 256; i++) {
-    const v = Math.max(0, (Math.pow(i / 255, 0.7) - 0.02) / 0.98)
+    const v = Math.max(0, (Math.pow(i / 255, 0.85) - 0.02) / 0.98)
     // 전체를 하얀빛 쪽으로 살짝 끌어올림
-    lut[i] = Math.min(1, v + (1 - v) * 0.08) * 255
+    lut[i] = Math.min(1, v + (1 - v) * 0.03) * 255
   }
   const toByte = (v: number) => lut[v > 255 ? 255 : v < 0 ? 0 : Math.round(v)]
 
@@ -537,14 +539,14 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
 
   const smooth = makeBlurred(0.1)
   if (smooth) {
-    ctx.globalAlpha = 0.12
+    ctx.globalAlpha = 0.04
     ctx.drawImage(smooth, 0, 0, width, height)
   }
 
   const glow = makeBlurred(0.06)
   if (glow) {
     ctx.globalCompositeOperation = 'screen'
-    ctx.globalAlpha = 0.12
+    ctx.globalAlpha = 0.06
     ctx.drawImage(glow, 0, 0, width, height)
   }
 
@@ -556,7 +558,7 @@ export const applySoftBeauty = (canvas: HTMLCanvasElement) => {
  * 선명하게 — 밝기 성분만 살짝 또렷하게 (눈·머리카락·글자).
  * 아주 작은 차이(노이즈)는 키우지 않아 지저분해지지 않는다.
  */
-export const applySharpen = (canvas: HTMLCanvasElement, amount = 0.6) => {
+export const applySharpen = (canvas: HTMLCanvasElement, amount = 0.8) => {
   const ctx = canvas.getContext('2d')
   if (!ctx) return
   const { width, height } = canvas

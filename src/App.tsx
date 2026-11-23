@@ -44,6 +44,8 @@ function App() {
   const audioContextRef = useRef<AudioContext | null>(null)
   // 안드로이드 크롬 등에서 '영상 캡처'가 아니라 카메라의 진짜 '사진 촬영'을 쓰기 위한 도구
   const imageCaptureRef = useRef<ImageCaptureLike | null>(null)
+  // 사진 비율이 영상과 달라 못 쓰는 기기면, 다음부터는 사진 촬영을 건너뛰어 시간을 아낀다
+  const skipRealPhotoRef = useRef(false)
   const [videoResolution, setVideoResolution] = useState('')
   const [lastCaptureInfo, setLastCaptureInfo] = useState('')
   const streamRef = useRef<MediaStream | null>(null)
@@ -144,6 +146,7 @@ function App() {
       try {
         const ImageCaptureCtor = (window as unknown as { ImageCapture?: ImageCaptureCtorLike })
           .ImageCapture
+        skipRealPhotoRef.current = false
         imageCaptureRef.current = ImageCaptureCtor && track ? new ImageCaptureCtor(track) : null
       } catch {
         imageCaptureRef.current = null
@@ -164,7 +167,9 @@ function App() {
   // 카메라의 진짜 사진 촬영(takePhoto)을 시도. 안 되거나 오래 걸리면 null
   const takeRealPhoto = async (): Promise<ImageBitmap | null> => {
     const imageCapture = imageCaptureRef.current
-    if (!imageCapture || typeof createImageBitmap !== 'function') return null
+    if (!imageCapture || skipRealPhotoRef.current || typeof createImageBitmap !== 'function') {
+      return null
+    }
     try {
       // 플래시는 끄고 찍기 (지원 안 하는 기기면 기본 설정으로 다시)
       const shoot = () =>
@@ -232,6 +237,7 @@ function App() {
         ratio = photo.width / videoWidth
         mode = `사진 ${photo.width}×${photo.height}`
       } else {
+        skipRealPhotoRef.current = true
         mode = `영상 ${videoWidth}×${videoHeight} (사진 ${photo.width}×${photo.height}은 비율이 달라 미사용)`
       }
     }
