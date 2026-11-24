@@ -21,6 +21,21 @@ const PHOTO_COUNT = 6
 // 인쇄 버튼을 누른 뒤 이 시간이 지나면 사진을 지우고 처음 화면으로 돌아간다 (다음 학생이 앞 사진을 보지 않도록)
 const AUTO_HOME_SECONDS = 120
 
+// 화면 확대(가운데를 잘라 크게 보기). 전면 카메라처럼 기본 확대가 안 되는 기기용
+const ZOOM_MIN = 1
+const ZOOM_MAX = 3
+const ZOOM_STEP = 0.25
+const ZOOM_STORAGE_KEY = 'fourcut-camera-zoom'
+
+const loadSavedZoom = () => {
+  try {
+    const saved = Number(window.localStorage.getItem(ZOOM_STORAGE_KEY))
+    if (Number.isFinite(saved) && saved >= ZOOM_MIN && saved <= ZOOM_MAX) return saved
+  } catch {
+    // 저장소를 못 쓰는 환경이면 기본값
+  }
+  return ZOOM_MIN
+}
 
 function App() {
   const [screen, setScreen] = useState<Screen>('welcome')
@@ -37,6 +52,7 @@ function App() {
   const [isComposing, setIsComposing] = useState(false)
   const [framePreview, setFramePreview] = useState('')
   const [cameraFacing, setCameraFacing] = useState<CameraFacing>('user')
+  const [zoom, setZoom] = useState<number>(loadSavedZoom)
   const [isAutoHomeScheduled, setIsAutoHomeScheduled] = useState(false)
   const autoHomeTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -499,6 +515,19 @@ function App() {
     void startCamera(nextFacing, false)
   }
 
+  // 확대 배율을 바꾸고, 다음에 켤 때도 같은 배율로 시작하도록 저장
+  const changeZoom = (delta: number) => {
+    setZoom((current) => {
+      const next = Math.round(Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, current + delta)) * 100) / 100
+      try {
+        window.localStorage.setItem(ZOOM_STORAGE_KEY, String(next))
+      } catch {
+        // 저장 실패해도 지금 화면에는 적용
+      }
+      return next
+    })
+  }
+
   const handleHome = () => {
     clearAutoHome()
     resetCaptureState()
@@ -828,6 +857,10 @@ function App() {
               className={`video-preview ${cameraFacing === 'user' ? 'mirrored' : ''} ${
                 cameraStatus === 'ready' ? '' : 'hidden'
               }`}
+              // 확대: 화면 가운데를 기준으로 키운다. 찍을 때는 화면에 보이는 칸 그대로 잘라 저장된다.
+              style={{
+                transform: `${cameraFacing === 'user' ? 'scaleX(-1) ' : ''}scale(${zoom})`,
+              }}
             />
             <div ref={guideRef} className="square-capture-guide" aria-hidden="true" />
             {capturePhase === 'countdown' && countdown !== null && (
@@ -857,6 +890,27 @@ function App() {
             </p>
           )}
           <div className="camera-bottom">
+            <div className="zoom-control" role="group" aria-label="화면 확대">
+              <button
+                type="button"
+                className="zoom-button"
+                onClick={() => changeZoom(-ZOOM_STEP)}
+                disabled={zoom <= ZOOM_MIN || capturePhase !== 'idle'}
+                aria-label="축소"
+              >
+                −
+              </button>
+              <span className="zoom-value">{`🔍 ${zoom}배`}</span>
+              <button
+                type="button"
+                className="zoom-button"
+                onClick={() => changeZoom(ZOOM_STEP)}
+                disabled={zoom >= ZOOM_MAX || capturePhase !== 'idle'}
+                aria-label="확대"
+              >
+                +
+              </button>
+            </div>
             <div className="photo-progress-wrap">
               <div className="photo-dots" aria-hidden="true">
                 {Array.from({ length: PHOTO_COUNT }).map((_, index) => (
